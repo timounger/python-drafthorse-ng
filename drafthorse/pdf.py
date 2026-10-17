@@ -25,6 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import re
 from datetime import datetime, timezone
 from io import BytesIO
 from lxml import etree
@@ -42,6 +43,8 @@ from xml.sax.saxutils import escape as xml_escape
 from drafthorse.xmp_schema import XMP_SCHEMA
 
 logger = logging.getLogger("drafthorse")
+
+PROFILES = ("MINIMUM", "BASIC WL", "BASIC", "EN 16931", "EXTENDED", "XRECHNUNG")
 
 
 def attach_xml(original_pdf, xml_data, level=None, metadata=None, lang=None):
@@ -84,7 +87,9 @@ def attach_xml(original_pdf, xml_data, level=None, metadata=None, lang=None):
     reader = PdfReader(BytesIO(original_pdf))
     output = PdfWriter()
 
-    output._header = "%PDF-1.6\r\n%\xc7\xec\x8f\xa2".encode()
+    # PDF/A-3 is based on PDF 1.7, keep a higher version of the input PDF
+    version = max(reader.pdf_header[5:8], "1.6")
+    output._header = "%PDF-{}".format(version).encode()
     output.append_pages_from_reader(reader)
 
     original_pdf_id = reader.trailer.get("/ID")
@@ -93,13 +98,13 @@ def attach_xml(original_pdf, xml_data, level=None, metadata=None, lang=None):
         # else : generate some ?
 
     # Extract metadata from XML
-    pdf_metadata, profile = _extract_xml_info(xml_data, level, metadata)
+    pdf_metadata, profile, version = _extract_xml_info(xml_data, level, metadata)
 
     # Extract output intents from input PDF
     output_intents = _get_original_output_intents(reader)
 
     _update_metadata_add_attachment(
-        output, xml_data, pdf_metadata, profile, output_intents, lang
+        output, xml_data, pdf_metadata, profile, output_intents, lang, version
     )
 
     outbuffer = BytesIO()
@@ -149,11 +154,17 @@ def _prepare_pdf_metadata_txt(pdf_metadata):
     }
 
 
-def _prepare_xmp_metadata(profile, pdf_metadata):
+def _xml_filename(profile):
+    # In the profile XRECHNUNG the embedded file must be named xrechnung.xml
+    return "xrechnung.xml" if profile == "XRECHNUNG" else "factur-x.xml"
+
+
+def _prepare_xmp_metadata(profile, pdf_metadata, version="1.0"):
     """
     Prepare pdf metadata using the FACTUR-X XMP extension schema
     :param profile: Invoice profile
     :param pdf_metadata: PDF metadata
+    :param version: Version of the embedded XML document
     :return: metadata XML
     """
     # Input metadata gets embedded in the XMP metadata inside XML nodes.
@@ -171,8 +182,8 @@ def _prepare_xmp_metadata(profile, pdf_metadata):
         timestamp=datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00"),
         urn="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#",
         documenttype="INVOICE",
-        xml_filename="factur-x.xml",
-        version="1.0",
+        xml_filename=_xml_filename(profile),
+        version=version,
         xmp_level=profile,
     )
     return xml_str.encode("utf-8")
@@ -185,6 +196,7 @@ def _update_metadata_add_attachment(
     facturx_level,
     output_intents,
     lang=None,
+    version="1.0",
 ):
     """
     Update PDF metadata and attach XML file
@@ -194,6 +206,7 @@ def _update_metadata_add_attachment(
     :param facturx_level: Invoice profile
     :param output_intents: Output intents from input PDF
     :param lang: Language identifier in RFC 3066 format
+    :param version: Version of the embedded XML document
     """
     # Disable encoding
     # md5sum = hashlib.md5(facturx_xml_str).hexdigest()
@@ -222,11 +235,11 @@ def _update_metadata_add_attachment(
         {NameObject("/F"): file_entry_obj, NameObject("/UF"): file_entry_obj}
     )
 
-    fname_obj = create_string_object("factur-x.xml")
+    fname_obj = create_string_object(_xml_filename(facturx_level))
     filespec_dict = DictionaryObject(
         {
             NameObject("/AFRelationship"): NameObject(
-                "/Data" if facturx_level in ("BASIC-WL", "MINIMUM") else "/Alternative"
+                "/Data" if facturx_level in ("BASIC WL", "MINIMUM") else "/Alternative"
             ),
             NameObject("/Desc"): create_string_object(
                 "Invoice metadata conforming to ZUGFeRD standard (https://www.ferd-net.de/)"
@@ -264,7 +277,7 @@ def _update_metadata_add_attachment(
         output_intent_obj = pdf_filestream._add_object(output_intent_dict)
         res_output_intents.append(output_intent_obj)
     # Update the root
-    metadata_xml_str = _prepare_xmp_metadata(facturx_level, pdf_metadata)
+    metadata_xml_str = _prepare_xmp_metadata(facturx_level, pdf_metadata, version)
     metadata_file_entry = DecodedStreamObject()
     metadata_file_entry.set_data(metadata_xml_str)
     metadata_file_entry.update(
@@ -307,7 +320,7 @@ def _extract_xml_info(xml_data, level=None, metadata=None):
        if omitted autodetection is performed
     :param metadata: optional dict with user defined pdf_metadata
         for fields "author", "keywords", "title" and "subject"
-    :return: Metadata and profile
+    :return: Metadata, profile and version of the XML document
     """
 
     xml_etree = etree.fromstring(xml_data)
@@ -342,24 +355,53 @@ def _extract_xml_info(xml_data, level=None, metadata=None):
         "/ram:ID",
         namespaces=namespaces,
     )
-    doc_id = doc_id_xpath[0].text
+    doc_id = (doc_id_xpath[0].text or "").strip()
 
     if level is None:
-        # autodetection of Factur-X profile
-        profile = doc_id.split(":")[-1]
-        if doc_id.split(":")[-1] in ["minimum", "basic", "basicwl", "extended"]:
-            profile = doc_id.split(":")[-1]
-        elif doc_id.split(":")[-1].startswith("xrechnung"):
-            profile = "xrechnung"
-        elif doc_id.split(":")[-2] == "en16931":
-            profile = doc_id.split(":")[-2]
-            profile = profile[:2] + " " + profile[2:]
-        else:
-            raise Exception("Invalid XML profile!")
+        profile = _detect_profile(doc_id)
     else:
-        profile = level
-
-    profile = profile.upper()
+        profile = _normalize_level(level)
     logger.info("Factur-X profile detected from XML: %s", profile)
 
-    return pdf_metadata, profile
+    version = "1.0"
+    if profile == "XRECHNUNG":
+        # fx:Version is the version of the XRechnung, e.g. 3p0
+        match = re.search(r"xrechnung_(\d+)\.(\d+)", doc_id)
+        if match:
+            version = "{}p{}".format(*match.groups())
+        else:
+            logger.warning("Could not detect XRechnung version from %s", doc_id)
+
+    return pdf_metadata, profile, version
+
+
+def _detect_profile(doc_id):
+    """
+    Detect the Factur-X profile from the guideline ID (BT-24)
+    :param doc_id: Guideline ID
+    :return: Profile as used for fx:ConformanceLevel
+    """
+    parts = doc_id.split(":")
+    last = parts[-1]
+    if last == "basicwl":
+        return "BASIC WL"
+    if last in ("minimum", "basic", "extended"):
+        return last.upper()
+    if last.startswith("xrechnung"):
+        return "XRECHNUNG"
+    if len(parts) >= 2 and parts[-2] == "en16931":
+        return "EN 16931"
+    raise ValueError("Invalid XML profile!")
+
+
+def _normalize_level(level):
+    """
+    Normalize a profile level given by the user, e.g. BASIC-WL or EN16931
+    :param level: Profile level
+    :return: Profile as used for fx:ConformanceLevel
+    """
+    profile = level.upper().replace("_", " ").replace("-", " ")
+    profile = {"BASICWL": "BASIC WL", "EN16931": "EN 16931"}.get(profile, profile)
+    if profile not in PROFILES:
+        raise ValueError("Invalid profile level {}".format(level))
+    return profile

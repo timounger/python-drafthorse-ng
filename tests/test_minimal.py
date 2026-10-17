@@ -1,16 +1,21 @@
-import copy
 import os
 import pytest
+import re
 import xml.etree.ElementTree as ET
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
+from io import BytesIO
+from lxml import etree
+from pypdf import PdfReader
 
 from drafthorse.models.accounting import (
     AppliedTradeTax,
     CategoryTradeTax,
     TradeAllowanceCharge,
 )
+from drafthorse.models import NS_RAM
 from drafthorse.models.document import Document
+from drafthorse.models.elements import DirectDateTimeElement, IDElement
 from drafthorse.models.party import TaxRegistration, TradeContact
 from drafthorse.models.payment import PaymentMeans
 from drafthorse.models.product import ProductClassification, ReferencedProduct
@@ -181,7 +186,7 @@ def test_product_classification_roundtrip(class_code):
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_referenced_documents_follow_xsd_sequence(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     invoice_ref = doc.trade.settlement.invoice_referenced_document
     invoice_ref.issuer_assigned_id = "RE1000"
     invoice_ref.type_code = "380"
@@ -202,7 +207,7 @@ def test_referenced_documents_follow_xsd_sequence(invoice_document):
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_line_invoice_referenced_document_line_id(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     invoice_ref = LineInvoiceReferencedDocument()
     invoice_ref.issuer_assigned_id = "RE1000"
     invoice_ref.line_id = "3"
@@ -247,7 +252,7 @@ def test_parse_fills_fields_sharing_a_tag_in_order():
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_elements_follow_xsd_sequence(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     agreement = doc.trade.agreement
     agreement.seller_tax_representative_party.name = "Steuervertreter GmbH"
     agreement.seller_tax_representative_party.address.country_id = "DE"
@@ -284,7 +289,7 @@ def test_elements_follow_xsd_sequence(invoice_document):
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_factur_x_1_09_extended_terms(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     settlement = doc.trade.settlement
     settlement.tax_currency_code = "USD"
 
@@ -400,7 +405,7 @@ def test_sub_invoice_line_without_agreement_and_delivery():
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_extended_parties_and_references(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     agreement = doc.trade.agreement
     agreement.seller.contact.person_name = "Max Mustermann"
     agreement.seller.contact.type_code = "SR"
@@ -463,7 +468,7 @@ def test_extended_parties_and_references(invoice_document):
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_repeatable_elements(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     seller = doc.trade.agreement.seller
     seller.id = "LIEF-1"
     seller.further_ids.add("LIEF-2")
@@ -520,3 +525,115 @@ def test_parse_xml_with_comments():
         doc = Document.parse(f.read())
 
     assert doc.header.id._text
+
+
+def _attachment_info(pdf_bytes):
+    reader = PdfReader(BytesIO(pdf_bytes))
+    xmp = reader.trailer["/Root"]["/Metadata"].get_object().get_data().decode()
+    filespec = reader.trailer["/Root"]["/AF"][0].get_object()
+
+    def xmp_value(name):
+        return re.search("<fx:%s>(.*?)<" % name, xmp).group(1)
+
+    return {
+        "level": xmp_value("ConformanceLevel"),
+        "filename": xmp_value("DocumentFileName"),
+        "version": xmp_value("Version"),
+        "relationship": filespec["/AFRelationship"],
+        "file": filespec["/F"],
+        "header": pdf_bytes[:8],
+    }
+
+
+@pytest.mark.parametrize(
+    "sample,level,relationship",
+    [
+        ("zugferd_2p5_MINIMUM_Rechnung.xml", "MINIMUM", "/Data"),
+        ("zugferd_2p5_BASIC-WL_Einfach.xml", "BASIC WL", "/Data"),
+        ("zugferd_2p5_BASIC_B01_01_Einfach.xml", "BASIC", "/Alternative"),
+        ("zugferd_2p5_EN16931_E05_01_Einfach.xml", "EN 16931", "/Alternative"),
+        ("zugferd_2p5_EXTENDED_X19_01_Warenrechnung.xml", "EXTENDED", "/Alternative"),
+    ],
+)
+def test_attach_xml_profile_metadata(sample, level, relationship, empty_pdf16_bytes):
+    samples = os.path.join(os.path.dirname(__file__), "samples")
+    with open(os.path.join(samples, sample), "rb") as f:
+        info = _attachment_info(attach_xml(empty_pdf16_bytes, f.read()))
+
+    assert info["level"] == level
+    assert info["relationship"] == relationship
+    assert info["filename"] == info["file"] == "factur-x.xml"
+    assert info["version"] == "1.0"
+
+
+def test_attach_xml_xrechnung(empty_pdf16_bytes):
+    samples = os.path.join(os.path.dirname(__file__), "samples")
+    with open(os.path.join(samples, "zugferd_2p5_XRECHNUNG_Einfach.xml"), "rb") as f:
+        info = _attachment_info(attach_xml(empty_pdf16_bytes, f.read()))
+
+    assert info["level"] == "XRECHNUNG"
+    assert info["relationship"] == "/Alternative"
+    assert info["filename"] == info["file"] == "xrechnung.xml"
+    assert info["version"] == "3p0"
+
+
+@pytest.mark.parametrize(
+    "level,expected",
+    [("BASIC-WL", "BASIC WL"), ("basicwl", "BASIC WL"), ("EN16931", "EN 16931")],
+)
+def test_attach_xml_level_is_normalized(
+    level, expected, invoice_document, empty_pdf16_bytes
+):
+    xml = invoice_document.serialize(schema="FACTUR-X_EXTENDED")
+    info = _attachment_info(attach_xml(empty_pdf16_bytes, xml, level=level))
+
+    assert info["level"] == expected
+
+
+@pytest.mark.parametrize("guideline", ["urn:factur-x", "invalid"])
+def test_attach_xml_invalid_guideline(guideline, invoice_document, empty_pdf16_bytes):
+    invoice_document.context.guideline_parameter.id = guideline
+    xml = invoice_document.serialize(schema="FACTUR-X_EXTENDED")
+
+    with pytest.raises(ValueError):
+        attach_xml(empty_pdf16_bytes, xml)
+    with pytest.raises(ValueError):
+        attach_xml(empty_pdf16_bytes, xml, level="COMFORT")
+
+
+def test_attach_xml_keeps_higher_pdf_version(
+    invoice_document, empty_pdf16_bytes, invoice_pdf17_bytes
+):
+    xml = invoice_document.serialize(schema="FACTUR-X_EXTENDED")
+
+    assert _attachment_info(attach_xml(empty_pdf16_bytes, xml))["header"] == b"%PDF-1.6"
+    assert (
+        _attachment_info(attach_xml(invoice_pdf17_bytes, xml))["header"] == b"%PDF-1.7"
+    )
+
+
+def test_parse_does_not_modify_input():
+    root = etree.fromstring(
+        b'<ram:ID xmlns:ram="urn:un:unece:uncefact:data:standard:'
+        b'ReusableAggregateBusinessInformationEntity:100">1</ram:ID>'
+    )
+    IDElement(NS_RAM, "ID").from_etree(root)
+
+    assert dict(root.attrib) == {}
+
+
+def test_direct_date_time_keeps_time():
+    node = ET.Element("{x}DateTime")
+    node.text = "2024-01-31T12:30:00"
+    element = DirectDateTimeElement("x", "DateTime").from_etree(node)
+
+    assert element._value == datetime(2024, 1, 31, 12, 30)
+    assert ET.tostring(element.to_etree()) == ET.tostring(node)
+
+    node.text = "31.01.2024"
+    with pytest.raises(TypeError):
+        DirectDateTimeElement("x", "DateTime").from_etree(node)
+    assert (
+        DirectDateTimeElement("x", "DateTime").from_etree(node, strict=False)._value
+        is None
+    )

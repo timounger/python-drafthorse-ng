@@ -326,11 +326,7 @@ class IDElement(StringElement):
 
     def from_etree(self, root, strict=True):
         self._text = root.text
-        try:
-            self._scheme_id = root.attrib["schemeID"]
-        except Exception:
-            root.attrib["schemeID"] = ""
-            self._scheme_id = root.attrib["schemeID"]
+        self._scheme_id = root.attrib.get("schemeID", "")
         self._set_on_input = True
         return self
 
@@ -436,9 +432,11 @@ class DirectDateTimeElement(StringElement):
 
     def from_etree(self, root, strict=True):
         try:
-            self._value = datetime.strptime(root.text, "%Y-%m-%dT%H:%M:%S").date()
-        except Exception:
-            self._value = ""
+            self._value = datetime.strptime(root.text, "%Y-%m-%dT%H:%M:%S")
+        except (TypeError, ValueError):
+            if strict:
+                raise TypeError("Date time %s cannot be parsed" % root.text)
+            self._value = None
         self._set_on_input = True
         return self
 

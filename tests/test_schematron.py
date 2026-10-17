@@ -1,4 +1,3 @@
-import copy
 import os
 import pytest
 
@@ -25,7 +24,7 @@ def test_sample_schematron(filename):
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_schematron_finds_errors_the_xsd_does_not(invoice_document):
-    doc = copy.deepcopy(invoice_document)
+    doc = invoice_document
     # Valid against the XSD, but EXTENDED requires its own guideline ID
     xml = doc.serialize(schema="FACTUR-X_EXTENDED")
 

@@ -1,3 +1,4 @@
+import copy
 import os
 import pytest
 from example import doc
@@ -5,7 +6,8 @@ from example import doc
 
 @pytest.fixture
 def invoice_document(request):
-    return doc
+    # Tests modify the document, so each test gets its own copy
+    return copy.deepcopy(doc)
 
 
 @pytest.fixture
