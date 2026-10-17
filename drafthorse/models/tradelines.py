@@ -1,8 +1,9 @@
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .accounting import (
-    ApplicableTradeTax,
-    BillingSpecifiedPeriod,
     IncludedTradeTax,
+    LineApplicableTradeTax,
+    LineBillingSpecifiedPeriod,
+    LineTradeAllowanceCharge,
     ReceivableAccountingAccount,
     TradeAllowanceCharge,
 )
@@ -18,7 +19,11 @@ from .fields import (
     StringField,
 )
 from .note import IncludedNote
-from .party import ItemSellerTradeParty, ShipToTradeParty, UltimateShipToTradeParty
+from .party import (
+    ItemSellerTradeParty,
+    LineShipToTradeParty,
+    LineUltimateShipToTradeParty,
+)
 from .product import TradeProduct
 from .references import (
     LineAdditionalReferencedDocument,
@@ -29,12 +34,17 @@ from .references import (
     LineInvoiceReferencedDocument,
     LineQuotationReferencedDocument,
     LineReceivingAdviceReferencedDocument,
+    LineSettlementAdditionalReferencedDocument,
     LineSellerOrderReferencedDocument,
     LineUltimateCustomerOrderReferencedDocument,
 )
 
 
 class AllowanceCharge(TradeAllowanceCharge):
+    sequence_numeric = None
+    basis_quantity = None
+    trade_tax = None
+
     class Meta:
         namespace = NS_RAM
         tag = "AppliedTradeAllowanceCharge"
@@ -165,11 +175,11 @@ class LineDelivery(Element):
         profile=EXTENDED,
         _d="Menge pro Packstück",
     )
-    ship_to: ShipToTradeParty = Field(
-        ShipToTradeParty, required=False, profile=EXTENDED
+    ship_to: LineShipToTradeParty = Field(
+        LineShipToTradeParty, required=False, profile=EXTENDED
     )
-    ultimate_ship_to: UltimateShipToTradeParty = Field(
-        UltimateShipToTradeParty, required=False, profile=EXTENDED
+    ultimate_ship_to: LineUltimateShipToTradeParty = Field(
+        LineUltimateShipToTradeParty, required=False, profile=EXTENDED
     )
     event: SupplyChainEvent = Field(
         SupplyChainEvent,
@@ -249,33 +259,37 @@ class LineSummation(Element):
 
 
 class LineSettlement(Element):
-    trade_tax: ApplicableTradeTax = Field(ApplicableTradeTax, required=False)
+    trade_tax: LineApplicableTradeTax = Field(LineApplicableTradeTax, required=False)
     further_trade_taxes: Container = MultiField(
-        ApplicableTradeTax,
+        LineApplicableTradeTax,
         required=False,
         profile=EXTENDED,
         _d="Weitere Steuerangaben der Position",
     )
-    period: BillingSpecifiedPeriod = Field(BillingSpecifiedPeriod, required=False)
+    period: LineBillingSpecifiedPeriod = Field(
+        LineBillingSpecifiedPeriod, required=False
+    )
     allowance_charge: Container = MultiField(
-        TradeAllowanceCharge,
+        LineTradeAllowanceCharge,
         required=False,
         _d="Schalter für Zu-/Abschlag",
     )
     monetary_summation: LineSummation = Field(
         LineSummation, required=False, profile=BASIC
     )
-    invoice_referenced_document: Container = MultiField(
+    invoice_referenced_document: LineInvoiceReferencedDocument = Field(
         LineInvoiceReferencedDocument,
         required=False,
         profile=EXTENDED,
         _d="Referenz auf die vorausgegangene Rechnung",
     )
-    additional_referenced_document: LineAdditionalReferencedDocument = Field(
-        LineAdditionalReferencedDocument, required=False, profile=COMFORT
+    additional_referenced_document: LineSettlementAdditionalReferencedDocument = Field(
+        LineSettlementAdditionalReferencedDocument,
+        required=False,
+        profile=COMFORT,
     )
     further_additional_referenced_documents: Container = MultiField(
-        LineAdditionalReferencedDocument,
+        LineSettlementAdditionalReferencedDocument,
         required=False,
         profile=EXTENDED,
         _d="Weitere Referenzdokumente der Position",

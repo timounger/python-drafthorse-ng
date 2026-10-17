@@ -10,7 +10,6 @@ from pypdf import PdfReader
 
 from drafthorse.models.accounting import (
     AppliedTradeTax,
-    CategoryTradeTax,
     TradeAllowanceCharge,
 )
 from drafthorse.models import NS_RAM
@@ -208,19 +207,19 @@ def test_referenced_documents_follow_xsd_sequence(invoice_document):
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
 def test_line_invoice_referenced_document_line_id(invoice_document):
     doc = invoice_document
-    invoice_ref = LineInvoiceReferencedDocument()
+    li = list(doc.trade.items.children)[0]
+    invoice_ref = li.settlement.invoice_referenced_document
+    assert isinstance(invoice_ref, LineInvoiceReferencedDocument)
     invoice_ref.issuer_assigned_id = "RE1000"
     invoice_ref.line_id = "3"
     invoice_ref.type_code = "380"
     invoice_ref.issue_date_time = date(2024, 1, 1)
-    li = list(doc.trade.items.children)[0]
-    li.settlement.invoice_referenced_document.add(invoice_ref)
 
     xml = doc.serialize(schema="FACTUR-X_EXTENDED")
 
     parsed = Document.parse(xml)
     li = list(parsed.trade.items.children)[0]
-    parsed_ref = list(li.settlement.invoice_referenced_document.children)[0]
+    parsed_ref = li.settlement.invoice_referenced_document
     assert parsed_ref.line_id._text == "3"
     assert parsed_ref.type_code._text == "380"
 
@@ -238,7 +237,7 @@ def test_parse_fills_fields_sharing_a_tag_in_order():
     summation = doc.trade.settlement.monetary_summation
     assert summation.tax_total._amount == Decimal("56.87")
     assert summation.tax_total._currency == "EUR"
-    assert summation.tax_total_other_currency.children == []
+    assert summation.tax_total_other_currency._amount == ""
 
     with open(
         os.path.join(samples, "zugferd_2p5_EXTENDED_X07_01_Fremdwaehrung.xml"), "rb"
@@ -247,7 +246,8 @@ def test_parse_fills_fields_sharing_a_tag_in_order():
     summation = doc.trade.settlement.monetary_summation
     assert summation.tax_total._amount == Decimal("163.16")
     assert summation.tax_total._currency == "GBP"
-    assert summation.tax_total_other_currency.children == [("183.14", "EUR")]
+    assert summation.tax_total_other_currency._amount == Decimal("183.14")
+    assert summation.tax_total_other_currency._currency == "EUR"
 
 
 @pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
@@ -311,13 +311,11 @@ def test_factur_x_1_09_extended_terms(invoice_document):
     charge.actual_amount = Decimal("1.00")
     charge.reason_code = ("5153", "AAA")
     charge.reason = "Abgabe"
-    tax = CategoryTradeTax()
-    tax.type_code = "VAT"
-    tax.exemption_reason = "Steuerbefreit"
-    tax.category_code = "E"
-    tax.exemption_reason_code = "VATEX-EU-132"
-    tax.rate_applicable_percent = Decimal("0")
-    charge.trade_tax.add(tax)
+    charge.trade_tax.type_code = "VAT"
+    charge.trade_tax.exemption_reason = "Steuerbefreit"
+    charge.trade_tax.category_code = "E"
+    charge.trade_tax.exemption_reason_code = "VATEX-EU-132"
+    charge.trade_tax.rate_applicable_percent = Decimal("0")
     settlement.allowance_charge.add(charge)
 
     # BT-X-591 / BT-X-592
@@ -371,8 +369,7 @@ def test_factur_x_1_09_extended_terms(invoice_document):
     charge = list(settlement.allowance_charge.children)[-1]
     assert charge.reason_code._list_id == "5153"
     assert charge.reason_code._text == "AAA"
-    tax = list(charge.trade_tax.children)[0]
-    assert tax.exemption_reason_code._text == "VATEX-EU-132"
+    assert charge.trade_tax.exemption_reason_code._text == "VATEX-EU-132"
     service = list(settlement.service_charge.children)[0]
     assert list(service.trade_tax.children)[0].exemption_reason._text == "Steuerbefreit"
     adjustment = list(settlement.financial_adjustment.children)[0]

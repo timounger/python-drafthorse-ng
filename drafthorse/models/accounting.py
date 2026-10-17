@@ -1,4 +1,3 @@
-from .container import CurrencyContainer, Container
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
 from .fields import (
@@ -7,9 +6,8 @@ from .fields import (
     DateField,
     DateTimeField,
     DecimalField,
+    Field,
     IndicatorField,
-    MultiCurrencyField,
-    MultiField,
     QuantityField,
     StringField,
 )
@@ -149,8 +147,12 @@ class MonetarySummation(Element):
     tax_total = CurrencyField(
         NS_RAM, "TaxTotalAmount", required=True, profile=BASIC, _d="Steuergesamtbetrag"
     )
-    tax_total_other_currency: CurrencyContainer = MultiCurrencyField(
-        NS_RAM, "TaxTotalAmount", profile=EXTENDED, _d="Steuergesamtbetrag"
+    tax_total_other_currency = CurrencyField(
+        NS_RAM,
+        "TaxTotalAmount",
+        required=False,
+        profile=EXTENDED,
+        _d="Steuergesamtbetrag in Buchungswährung",
     )
     rounding_amount = DecimalField(
         NS_RAM,
@@ -260,7 +262,9 @@ class TradeAllowanceCharge(Element):
         _d="Grund des Zu-/Abschlags (Code), optional mit Code-Liste",
     )
     reason = StringField(NS_RAM, "Reason", required=False, profile=COMFORT)
-    trade_tax: Container = MultiField(CategoryTradeTax, required=False, profile=COMFORT)
+    trade_tax: CategoryTradeTax = Field(
+        CategoryTradeTax, required=False, profile=COMFORT
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -302,3 +306,20 @@ class IncludedTradeTax(Element):
     class Meta:
         namespace = NS_RAM
         tag = "IncludedTradeTax"
+
+
+class LineBillingSpecifiedPeriod(BillingSpecifiedPeriod):
+    description = None
+
+
+class LineApplicableTradeTax(ApplicableTradeTax):
+    basis_amount = None
+    line_total_basis_amount = None
+    allowance_charge_basis_amount = None
+    tax_point_date = None
+
+
+class LineTradeAllowanceCharge(TradeAllowanceCharge):
+    sequence_numeric = None
+    basis_quantity = None
+    trade_tax = None

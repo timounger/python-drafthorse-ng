@@ -12,6 +12,21 @@ from .container import Container
 from .fields import Field
 
 
+class RemovedField:
+    """
+    Marks an inherited field as not used in the context of a subclass, set
+    with ``field = None`` in the class body
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, instance, objtype):
+        raise AttributeError(
+            "{} is not used in {}".format(self.name, getattr(objtype, "__name__", ""))
+        )
+
+
 class BaseElementMeta(type):
     @classmethod
     def __prepare__(self, name, bases):
@@ -22,13 +37,19 @@ class BaseElementMeta(type):
         cls = super(BaseElementMeta, mcls).__new__(mcls, name, bases, attrs)
         fields = list(cls._fields) if hasattr(cls, "_fields") else []
         for attr, obj in attrs.items():
+            inherited = [i for i, f in enumerate(fields) if f.name == attr]
             if isinstance(obj, Field):
                 if sys.version_info < (3, 6):
                     obj.__set_name__(cls, attr)
-                # A redeclared field replaces the inherited one and moves to
-                # its new position, so subclasses can follow the XSD sequence
-                fields = [f for f in fields if f.name != attr]
-                fields.append(obj)
+                # A redeclared field replaces the inherited one in place
+                if inherited:
+                    fields[inherited[0]] = obj
+                else:
+                    fields.append(obj)
+            elif obj is None and inherited:
+                # The subclass removes an inherited field
+                del fields[inherited[0]]
+                setattr(cls, attr, RemovedField(attr))
         cls._fields = fields
         return cls
 

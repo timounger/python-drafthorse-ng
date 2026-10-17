@@ -86,6 +86,12 @@ class LegalOrganization(Element):
         tag = "SpecifiedLegalOrganization"
 
 
+class LineLegalOrganization(LegalOrganization):
+    # Parties on line level and the manufacturer have no address of the
+    # legal organization
+    trade_address = None
+
+
 class TradeContact(Element):
     person_name = StringField(NS_RAM, "PersonName", required=False, profile=EXTENDED)
     department_name = StringField(
@@ -167,48 +173,64 @@ class TradeParty(Element):
 
 
 class SalesAgentTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "SalesAgentTradeParty"
 
 
 class BuyerTaxRepresentativeTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "BuyerTaxRepresentativeTradeParty"
 
 
 class BuyerAgentTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "BuyerAgentTradeParty"
 
 
 class SellerTaxRepresentativeTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "SellerTaxRepresentativeTradeParty"
 
 
 class PayeeTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "PayeeTradeParty"
 
 
 class PayerTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "PayerTradeParty"
 
 
 class InvoicerTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "InvoicerTradeParty"
 
 
 class InvoiceeTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "InvoiceeTradeParty"
@@ -227,36 +249,84 @@ class SellerTradeParty(TradeParty):
 
 
 class EndUserTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "ProductEndUserTradeParty"
 
 
 class ShipToTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "ShipToTradeParty"
 
 
 class ShipFromTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "ShipFromTradeParty"
 
 
 class UltimateShipToTradeParty(TradeParty):
+    description = None
+
     class Meta:
         namespace = NS_RAM
         tag = "UltimateShipToTradeParty"
 
 
 class ItemSellerTradeParty(TradeParty):
+    legal_organization: LineLegalOrganization = Field(
+        LineLegalOrganization,
+        required=False,
+        profile=EXTENDED,
+        _d="Handelsinformationen des Handelspartners",
+    )
+
     class Meta:
         namespace = NS_RAM
         tag = "ItemSellerTradeParty"
 
 
 class ManufacturerTradeParty(TradeParty):
+    legal_organization: LineLegalOrganization = Field(
+        LineLegalOrganization,
+        required=False,
+        profile=EXTENDED,
+        _d="Handelsinformationen des Handelspartners",
+    )
+
     class Meta:
         namespace = NS_RAM
         tag = "ManufacturerTradeParty"
+
+
+class LineShipToTradeParty(ShipToTradeParty):
+    legal_organization: LineLegalOrganization = Field(
+        LineLegalOrganization,
+        required=False,
+        profile=EXTENDED,
+        _d="Handelsinformationen des Handelspartners",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "ShipToTradeParty"
+
+
+class LineUltimateShipToTradeParty(UltimateShipToTradeParty):
+    legal_organization: LineLegalOrganization = Field(
+        LineLegalOrganization,
+        required=False,
+        profile=EXTENDED,
+        _d="Handelsinformationen des Handelspartners",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "UltimateShipToTradeParty"

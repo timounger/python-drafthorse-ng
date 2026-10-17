@@ -1,13 +1,11 @@
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
 from .party import PayeeTradeParty
-from .container import StringContainer, CurrencyContainer
 from .fields import (
+    CurrencyField,
     DateTimeField,
     DecimalField,
     Field,
-    MultiCurrencyField,
-    MultiStringField,
     QuantityField,
     StringField,
 )
@@ -71,9 +69,7 @@ class PayeeFinancialInstitution(Element):
 
 class PaymentMeans(Element):
     type_code = StringField(NS_RAM, "TypeCode", required=True, profile=COMFORT)
-    information: StringContainer = MultiStringField(
-        NS_RAM, "Information", required=False, profile=COMFORT
-    )
+    information = StringField(NS_RAM, "Information", required=False, profile=COMFORT)
     financial_card: FinancialCard = Field(FinancialCard)
     payer_account: PayerFinancialAccount = Field(PayerFinancialAccount)
     payee_account: PayeeFinancialAccount = Field(PayeeFinancialAccount)
@@ -208,7 +204,7 @@ class PaymentTerms(Element):
     debit_mandate_id = StringField(
         NS_RAM, "DirectDebitMandateID", required=False, profile=BASIC
     )
-    partial_amount: CurrencyContainer = MultiCurrencyField(
+    partial_amount = CurrencyField(
         NS_RAM,
         "PartialPaymentAmount",
         profile=EXTENDED,
