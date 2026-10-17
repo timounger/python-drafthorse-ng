@@ -25,6 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import os
 import re
 from datetime import datetime, timezone
 from io import BytesIO
@@ -102,6 +103,10 @@ def attach_xml(original_pdf, xml_data, level=None, metadata=None, lang=None):
 
     # Extract output intents from input PDF
     output_intents = _get_original_output_intents(reader)
+    if not output_intents:
+        # PDF/A requires an output intent for device dependent colours
+        logger.info("Input PDF has no output intent, adding sRGB")
+        output_intents = [_default_output_intent()]
 
     _update_metadata_add_attachment(
         output, xml_data, pdf_metadata, profile, output_intents, lang, version
@@ -111,6 +116,30 @@ def attach_xml(original_pdf, xml_data, level=None, metadata=None, lang=None):
     output.write(outbuffer)
     outbuffer.seek(0)
     return outbuffer.read()
+
+
+def _default_output_intent():
+    """
+    Create an sRGB output intent as used for PDF/A
+    :return: Output intent and destination output profile
+    """
+    icc = os.path.join(os.path.dirname(__file__), "schema", "icc", "sRGB-v2-micro.icc")
+    with open(icc, "rb") as f:
+        profile = DecodedStreamObject()
+        profile.set_data(f.read())
+    profile.update({NameObject("/N"): NumberObject(3)})
+    output_intent = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/OutputIntent"),
+            NameObject("/S"): NameObject("/GTS_PDFA1"),
+            NameObject("/OutputConditionIdentifier"): create_string_object(
+                "sRGB IEC61966-2.1"
+            ),
+            NameObject("/RegistryName"): create_string_object("http://www.color.org"),
+            NameObject("/Info"): create_string_object("sRGB IEC61966-2.1"),
+        }
+    )
+    return output_intent, profile
 
 
 def _get_original_output_intents(original_pdf):

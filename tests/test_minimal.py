@@ -634,3 +634,29 @@ def test_direct_date_time_keeps_time():
         DirectDateTimeElement("x", "DateTime").from_etree(node, strict=False)._value
         is None
     )
+
+
+def test_attach_xml_adds_output_intent(
+    invoice_document, empty_pdf16_bytes, invoice_pdf17_bytes
+):
+    xml = invoice_document.serialize(schema="FACTUR-X_EXTENDED")
+
+    # PDF/A requires an output intent, it is added if the input has none
+    assert (
+        "/OutputIntents" not in PdfReader(BytesIO(empty_pdf16_bytes)).trailer["/Root"]
+    )
+    root = PdfReader(BytesIO(attach_xml(empty_pdf16_bytes, xml))).trailer["/Root"]
+    intent = root["/OutputIntents"][0].get_object()
+    assert intent["/S"] == "/GTS_PDFA1"
+    assert intent["/DestOutputProfile"].get_object()["/N"] == 3
+
+    # An existing output intent is kept
+    original = PdfReader(BytesIO(invoice_pdf17_bytes)).trailer["/Root"][
+        "/OutputIntents"
+    ]
+    root = PdfReader(BytesIO(attach_xml(invoice_pdf17_bytes, xml))).trailer["/Root"]
+    assert len(root["/OutputIntents"]) == len(original)
+    assert (
+        root["/OutputIntents"][0].get_object()["/OutputConditionIdentifier"]
+        == original[0].get_object()["/OutputConditionIdentifier"]
+    )
