@@ -13,7 +13,7 @@ The limited permissions granted above are perpetual and will not be revoked by U
 This document and the information contained herein is provided on an "AS IS" basis and UN/CEFACT DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 -->
 <xsd:schema xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100" targetNamespace="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" elementFormDefault="qualified" version="100.D16B">
-	<xsd:import namespace="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100" schemaLocation="Factur-X_1.09.2_XRECHNUNG_CrossIndustryInvoice_UnqualifiedDataType_100pD16B.xsd"/>
+	<xsd:import namespace="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100" schemaLocation="FACTUR-X_XRECHNUNG_UDT.xsd"/>
 	<xsd:simpleType name="AccountingAccountTypeCodeContentType">
 		<xsd:restriction base="xsd:token"/>
 	</xsd:simpleType>

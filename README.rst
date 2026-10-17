@@ -20,7 +20,7 @@ The package is not published on PyPI. Install it directly from GitHub, pinned to
 
 .. code-block:: bash
 
-    pip install "drafthorse-ng @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.0"
+    pip install "drafthorse-ng @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.1"
 
 The same line can be used in a ``requirements.txt``.
 
@@ -166,7 +166,7 @@ official Factur-X schematron, install the optional dependency and pass ``schemat
 
 .. code-block:: bash
 
-    pip install "drafthorse-ng[schematron] @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.0"
+    pip install "drafthorse-ng[schematron] @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.1"
 
 .. code-block:: python
 
@@ -231,6 +231,7 @@ The PDF handling (drafthorse/pdf.py) was originally based on the code of factur-
 released under a BSD license.
 
 The packages includes schemas and samples of the ZUGFeRD specification (.xsd and .xml files) which are owned by the *Forum für elektronische Rechnungen bei der AWV e.V („FeRD“)* and are released under a proprietary license that allows bundling them together with other software for free.
+The schema files are renamed to shorter names, only their references to each other are adjusted.
 
 The schematron rules for the profile XRECHNUNG (``drafthorse/schema/schematron/xrechnung``) are included unmodified:
 the rules of EN 16931 are licensed under the European Union Public Licence (EUPL) 1.2, the rules of the CIUS XRechnung

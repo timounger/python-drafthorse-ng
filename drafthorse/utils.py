@@ -52,11 +52,8 @@ def validate_xml(xmlout, schema):
         logger.warning("Could not validate output as LXML is not installed.")
         return xmlout
     if schema is not None:
-        if schema == "FACTUR-X_XRECHNUNG":
-            schema = "Factur-X_1.09.2_XRECHNUNG_CrossIndustryInvoice_100pD16B"
-        elif schema.startswith("FACTUR-X_"):
-            schema = schema.replace("FACTUR-X_", "Factur-X_1.09.2_")
-            schema = schema.replace("BASIC-WL", "BASICWL")
+        # The schema files are named after the schema, the paths of the original file
+        # names exceed the Windows path limit when pip builds the package.
         schema = etree.XMLSchema(
             file=os.path.join(os.path.dirname(__file__), "schema", schema + ".xsd")
         )

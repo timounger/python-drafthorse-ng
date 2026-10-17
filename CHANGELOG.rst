@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.0.1 (2026-10-17)
+------------------
+
+* Installing from git failed on Windows, as the paths of the schema files exceeded the Windows path
+  limit while pip built the package. The schema files are now named after the schema, e.g.
+  ``FACTUR-X_EXTENDED.xsd`` and ``FACTUR-X_EXTENDED_RAM.xsd``. Passing a file name of the old
+  schema files to ``validate_xml`` no longer works, the names like ``FACTUR-X_EXTENDED`` are
+  unchanged.
+
 1.0.0 (2026-10-17)
 ------------------
 
