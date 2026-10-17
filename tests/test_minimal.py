@@ -1,5 +1,8 @@
 import pytest
+import xml.etree.ElementTree as ET
 
+from drafthorse.models.product import ProductClassification
+from drafthorse.models.tradelines import LineItem
 from drafthorse.pdf import attach_xml
 
 
@@ -126,3 +129,28 @@ def test_unused_name_spaces_included(invoice_document):
     assert 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' in xml.decode()
     assert "xs:" not in xml.decode()
     assert "xsi:" not in xml.decode()
+
+
+@pytest.mark.parametrize(
+    "class_code",
+    [
+        ("TST", "19.0", "AB-12"),
+        ("TST", "", "AB-12"),
+        ("", "", "AB-12"),
+    ],
+)
+def test_product_classification_roundtrip(class_code):
+    li = LineItem()
+    li.product.name = "Rainbow"
+    classification = ProductClassification()
+    classification.class_code = class_code
+    li.product.classifications.add(classification)
+    xml = ET.tostring(li.to_etree())
+
+    parsed = LineItem().from_etree(ET.fromstring(xml))
+    parsed_code = list(parsed.product.classifications.children)[0].class_code
+
+    assert parsed_code._list_id == class_code[0]
+    assert parsed_code._list_version_id == class_code[1]
+    assert parsed_code._text == class_code[2]
+    assert ET.tostring(parsed.to_etree()) == xml

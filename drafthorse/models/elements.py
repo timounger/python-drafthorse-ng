@@ -231,14 +231,16 @@ class ClassificationElement(StringElement):
     def to_etree(self):
         node = self._etree_node()
         node.text = self._text
-        node.attrib["listID"] = self._list_id
-        node.attrib["listVersionID"] = self._list_version_id
+        if self._list_id != "":
+            node.attrib["listID"] = self._list_id
+        if self._list_version_id != "":
+            node.attrib["listVersionID"] = self._list_version_id
         return node
 
     def from_etree(self, root, strict=True):
-        self._text = Decimal(root.text)
-        self._list_id = root.attrib["listID"]
-        self._list_version_id = root.attrib["listVersionID"]
+        self._text = root.text
+        self._list_id = root.attrib.get("listID", "")
+        self._list_version_id = root.attrib.get("listVersionID", "")
         self._set_on_input = True
         return self
 
