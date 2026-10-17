@@ -222,11 +222,11 @@ class LineAdditionalReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
     type_code = StringField(NS_RAM, "TypeCode", required=False, profile=COMFORT)
     name = StringField(NS_RAM, "Name", required=False, profile=COMFORT)
-    reference_type_code = StringField(
-        NS_RAM, "ReferenceTypeCode", profile=COMFORT, required=True
-    )
     attached_object = BinaryObjectField(
         NS_RAM, "AttachmentBinaryObject", required=False, profile=COMFORT
+    )
+    reference_type_code = StringField(
+        NS_RAM, "ReferenceTypeCode", profile=COMFORT, required=True
     )
     issue_date_time = DateTimeField(
         NS_RAM,

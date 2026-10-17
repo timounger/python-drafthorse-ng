@@ -102,15 +102,27 @@ class Element(metaclass=BaseElementMeta):
                     root.tag, "{%s}%s" % (self.Meta.namespace, self.Meta.tag)
                 )
             )
+        # Several fields may share a tag (e.g. a single field followed by a
+        # container for further occurrences), they are filled in order
         field_index = {}
         for field in self._fields:
             element = getattr(self, field.name)
-            field_index[element.get_tag()] = (field.name, element)
+            field_index.setdefault(element.get_tag(), []).append(field.name)
+        filled = set()
         for child in root:
             if child.tag == ET.Comment:
                 continue
             if child.tag in field_index:
-                name, _childel = field_index[child.tag]
+                candidates = field_index[child.tag]
+                name = next(
+                    (
+                        n
+                        for n in candidates
+                        if n not in filled or isinstance(getattr(self, n), Container)
+                    ),
+                    candidates[-1],
+                )
+                filled.add(name)
                 if isinstance(getattr(self, name), Container):
                     getattr(self, name).add_from_etree(child, strict)
                 else:
@@ -326,6 +338,8 @@ class IDElement(StringElement):
 
 
 class DateTimeElement(StringElement):
+    _string_tag = "DateTimeString"
+
     def __init__(
         self, namespace, tag, value=None, format="102", date_time_namespace=NS_UDT
     ):
@@ -336,7 +350,7 @@ class DateTimeElement(StringElement):
 
     def to_etree(self):
         t = self._etree_node()
-        node = ET.Element("{%s}%s" % (self._date_time_namespace, "DateTimeString"))
+        node = ET.Element("{%s}%s" % (self._date_time_namespace, self._string_tag))
         if self._value:
             if self._format == "102":
                 node.text = self._value.strftime("%Y%m%d")
@@ -354,7 +368,7 @@ class DateTimeElement(StringElement):
     def from_etree(self, root, strict=True):
         if len(root) != 1:
             raise TypeError("Date containers should have one child")
-        if root[0].tag != "{%s}%s" % (self._date_time_namespace, "DateTimeString"):
+        if root[0].tag != "{%s}%s" % (self._date_time_namespace, self._string_tag):
             if strict:
                 raise TypeError("Tag %s not recognized" % root[0].tag)
             else:
@@ -379,6 +393,10 @@ class DateTimeElement(StringElement):
 
     def __str__(self):
         return "{}".format(self._value)
+
+
+class DateElement(DateTimeElement):
+    _string_tag = "DateString"
 
 
 class DirectDateTimeElement(StringElement):

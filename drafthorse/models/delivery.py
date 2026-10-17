@@ -64,11 +64,11 @@ class TradeDelivery(Element):
     despatch_advice: DespatchAdviceReferencedDocument = Field(
         DespatchAdviceReferencedDocument, required=False, profile=COMFORT
     )
-    delivery_note: DeliveryNoteReferencedDocument = Field(
-        DeliveryNoteReferencedDocument, required=False, profile=EXTENDED
-    )
     receiving_advice: ReceivingAdviceReferencedDocument = Field(
         ReceivingAdviceReferencedDocument, required=False, profile=COMFORT
+    )
+    delivery_note: DeliveryNoteReferencedDocument = Field(
+        DeliveryNoteReferencedDocument, required=False, profile=EXTENDED
     )
 
     class Meta:

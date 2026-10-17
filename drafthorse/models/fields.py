@@ -273,6 +273,16 @@ class DateTimeField(Field):
         )
 
 
+class DateField(DateTimeField):
+    def __init__(
+        self, namespace, tag, default=False, required=False, profile=BASIC, _d=None
+    ):
+        from .elements import DateElement
+
+        super().__init__(namespace, tag, default, required, profile, _d)
+        self.cls = DateElement
+
+
 class DirectDateTimeField(Field):
     def __init__(
         self, namespace, tag, default=False, required=False, profile=BASIC, _d=None

@@ -94,14 +94,14 @@ class LineAgreement(Element):
     contract: LineContractReferencedDocument = Field(
         LineContractReferencedDocument, required=False, profile=EXTENDED
     )
-    customer_order: LineUltimateCustomerOrderReferencedDocument = Field(
-        LineUltimateCustomerOrderReferencedDocument, required=False, profile=EXTENDED
-    )
     additional_references: Container = MultiField(
         LineAdditionalReferencedDocument, required=False, profile=COMFORT
     )
     gross: GrossPrice = Field(GrossPrice, required=False, profile=COMFORT)
     net: NetPrice = Field(NetPrice)
+    customer_order: LineUltimateCustomerOrderReferencedDocument = Field(
+        LineUltimateCustomerOrderReferencedDocument, required=False, profile=EXTENDED
+    )
 
     class Meta:
         namespace = NS_RAM

@@ -65,6 +65,9 @@ class TradeAgreement(Element):
         SellerTradeParty, required=True, _d="Detailinformationen zum Verkäufer"
     )
     buyer: BuyerTradeParty = Field(BuyerTradeParty, required=True)
+    seller_tax_representative_party: SellerTaxRepresentativeTradeParty = Field(
+        SellerTaxRepresentativeTradeParty, required=False
+    )
     end_user: EndUserTradeParty = Field(
         EndUserTradeParty, required=False, _d="Abweichender Endverbraucher"
     )
@@ -84,9 +87,6 @@ class TradeAgreement(Element):
         AdditionalReferencedDocument, required=False, profile=COMFORT
     )
     description = StringField(NS_RAM, "Description", required=False, profile=COMFORT)
-    seller_tax_representative_party: SellerTaxRepresentativeTradeParty = Field(
-        SellerTaxRepresentativeTradeParty, required=False
-    )
     procuring_project_type: ProcuringProjectType = Field(
         ProcuringProjectType, required=False
     )
@@ -135,19 +135,19 @@ class IncludedTradeTax(Element):
         profile=COMFORT,
         _d="Grund der Steuerbefreiung (Freitext)",
     )
-    exemption_reason_code = StringField(
-        NS_RAM,
-        "ExemptionReasonCode",
-        required=False,
-        profile=EXTENDED,
-        _d="Grund der Steuerbefreiung (Code)",
-    )
     category_code = StringField(
         NS_RAM,
         "CategoryCode",
         required=False,
         profile=COMFORT,
         _d="Steuerkategorie (Wert)",
+    )
+    exemption_reason_code = StringField(
+        NS_RAM,
+        "ExemptionReasonCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Grund der Steuerbefreiung (Code)",
     )
     rate_applicable_percent = DecimalField(
         NS_RAM, "RateApplicablePercent", required=True, profile=BASIC
