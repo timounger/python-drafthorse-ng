@@ -12,7 +12,7 @@ def validate_xml(xmlout, schema):
         return xmlout
     if schema is not None:
         if schema.startswith("FACTUR-X_"):
-            schema = schema.replace("FACTUR-X_", "Factur-X_1.0.07_")
+            schema = schema.replace("FACTUR-X_", "Factur-X_1.09.2_")
             schema = schema.replace("BASIC-WL", "BASICWL")
         schema = etree.XMLSchema(
             file=os.path.join(os.path.dirname(__file__), "schema", schema + ".xsd")

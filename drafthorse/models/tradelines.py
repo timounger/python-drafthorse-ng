@@ -25,6 +25,7 @@ from .references import (
     LineDeliveryNoteReferencedDocument,
     LineDespatchAdviceReferencedDocument,
     LineInvoiceReferencedDocument,
+    LineQuotationReferencedDocument,
     LineReceivingAdviceReferencedDocument,
     LineUltimateCustomerOrderReferencedDocument,
 )
@@ -64,6 +65,13 @@ class NetPrice(Element):
 
 class LineDocument(Element):
     line_id = StringField(NS_RAM, "LineID")
+    parent_line_id = StringField(
+        NS_RAM,
+        "ParentLineID",
+        required=False,
+        profile=EXTENDED,
+        _d="Kennung der übergeordneten Position",
+    )
     line_status_code = StringField(NS_RAM, "LineStatusCode")
     line_status_reason_code = StringField(NS_RAM, "LineStatusReasonCode")
     notes: Container = MultiField(IncludedNote)
@@ -76,6 +84,12 @@ class LineDocument(Element):
 class LineAgreement(Element):
     buyer_order: LineBuyerOrderReferencedDocument = Field(
         LineBuyerOrderReferencedDocument, required=False, profile=EXTENDED
+    )
+    quotation: LineQuotationReferencedDocument = Field(
+        LineQuotationReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Detailinformationen zum zugehörigen Angebot",
     )
     contract: LineContractReferencedDocument = Field(
         LineContractReferencedDocument, required=False, profile=EXTENDED

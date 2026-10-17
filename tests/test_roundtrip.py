@@ -30,7 +30,13 @@ def prettify(xml, **kwargs):
         return reparsed.toprettyxml(indent="\t")
     else:
         parser = etree.XMLParser(remove_blank_text=True, **kwargs)
-        return etree.tostring(etree.fromstring(xml, parser), pretty_print=True)
+        root = etree.fromstring(xml, parser)
+        # The order of attributes is not significant in XML
+        for el in root.iter():
+            attrib = sorted(el.attrib.items())
+            el.attrib.clear()
+            el.attrib.update(attrib)
+        return etree.tostring(root, pretty_print=True)
 
 
 @pytest.mark.parametrize("filename", samples)

@@ -135,6 +135,21 @@ class LineBuyerOrderReferencedDocument(ReferencedDocument):
         tag = "BuyerOrderReferencedDocument"
 
 
+class LineQuotationReferencedDocument(ReferencedDocument):
+    line_id = StringField(NS_RAM, "LineID", required=False, profile=EXTENDED)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "QuotationReferencedDocument"
+
+
 class LineContractReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
     issue_date_time = DateTimeField(
@@ -233,6 +248,15 @@ class DeliveryNoteReferencedDocument(ReferencedDocument):
 
 
 class LineDeliveryNoteReferencedDocument(ReferencedDocument):
+    line_id = StringField(NS_RAM, "LineID", required=False, profile=EXTENDED)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
+
     class Meta:
         namespace = NS_RAM
         tag = "DeliveryNoteReferencedDocument"
