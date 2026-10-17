@@ -22,8 +22,8 @@ further abstractions or simplifications. You can set and parse most parameters d
 2.5.2 (Factur-X 1.09.2). To see which parameters are defined, please refer to the official ZUGFeRD specification,
 there is no documentation for this library that reiterates it.
 
-All output is validated against the official XSDs, but no validation of profile levels
-(basic, comfort, extended) is performed.
+All output is validated against the official XSDs. Validation against the official schematron
+(business rules of the profile levels) is available optionally, see below.
 
 The profile level is detected automatically based on the XML data and added to the PDF metadata.
 
@@ -158,6 +158,27 @@ Generating::
         f.write(new_pdf_bytes)
 
 ``Document.serialize()`` will validate the generated XML against the specified schema and raise an error if it is not valid. If you want to avoid validation, you can set the ``schema`` parameter to ``None``.
+
+The XSDs only check the structure. To additionally check the business rules and code lists of the
+official Factur-X schematron, install the optional dependency and pass ``schematron=True``:
+
+.. code-block:: bash
+
+    pip install drafthorse[schematron]
+
+.. code-block:: python
+
+    from drafthorse.utils import SchematronError
+
+    try:
+        xml = doc.serialize(schema="FACTUR-X_EXTENDED", schematron=True)
+    except SchematronError as e:
+        for rule_id, location, message in e.errors:
+            print(rule_id, location, message)
+
+Schematron rules are available for the profiles ``MINIMUM``, ``BASIC-WL``, ``BASIC``, ``EN16931``
+and ``EXTENDED``. ``drafthorse.utils.validate_schematron(xml, schema)`` can also be used on existing
+XML and returns the list of warnings.
 
 Development
 -----------

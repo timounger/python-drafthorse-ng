@@ -4,6 +4,8 @@ from .container import StringContainer, Container
 from .note import IncludedNote
 
 from . import BASIC, EXTENDED, NS_QDT, NS_RAM, NS_RSM, NS_UDT
+from drafthorse.utils import validate_schematron
+
 from .elements import Element
 from .fields import (
     DateTimeField,
@@ -112,7 +114,14 @@ class Document(Element):
         for ns, url in self.__namespaces.items():
             ET.register_namespace(ns, url)
 
-    def serialize(self, schema="FACTUR-X_BASIC"):
+    def serialize(self, schema="FACTUR-X_BASIC", schematron=False):
+        """
+        Create XML from ZUGFeRD data model
+        :param schema: XML schema
+        :param schematron: additionally validate against the official
+            Factur-X schematron rules, requires saxonche
+        :return: ZUGFeRD XML
+        """
         # First pass
         xml = super().serialize(schema)
 
@@ -121,7 +130,10 @@ class Document(Element):
         for ns, url in self.__namespaces.items():
             if f"xmlns:{ns}".encode() not in xml:
                 root.set(f"xmlns:{ns}", url)
-        return ET.tostring(root, "utf-8", xml_declaration=True)
+        xml = ET.tostring(root, "utf-8", xml_declaration=True)
+        if schematron:
+            validate_schematron(xml, schema)
+        return xml
 
     class Meta:
         namespace = NS_RSM

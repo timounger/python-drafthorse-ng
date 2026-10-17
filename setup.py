@@ -37,6 +37,7 @@ setup(
     ],
     keywords="xml banking sepa",
     install_requires=["lxml", "pypdf"],
+    extras_require={"schematron": ["saxonche"]},
     packages=find_packages(include=["drafthorse", "drafthorse.*"]),
     include_package_data=True,
 )
