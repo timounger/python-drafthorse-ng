@@ -14,13 +14,12 @@ except:  # noqa
     long_description = ""
 
 setup(
-    name="drafthorse",
+    name="drafthorse-ng",
     version=version,
     description="Python ZUGFeRD XML implementation",
     long_description=long_description,
-    url="https://github.com/pretix/python-drafthorse",
-    author="Raphael Michel",
-    author_email="michel@rami.io",
+    url="https://github.com/timounger/python-drafthorse-ng",
+    author="Timo Unger",
     license="Apache License",
     classifiers=[
         "Intended Audience :: Developers",

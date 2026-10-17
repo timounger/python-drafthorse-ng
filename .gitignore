@@ -9,3 +9,6 @@ env
 .cache/
 CLAUDE.md
 .coverage
+docs/
+*.code-workspace
+.pytest_cache/

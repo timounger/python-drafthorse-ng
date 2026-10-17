@@ -1,8 +1,10 @@
 Changelog
 =========
 
-Unreleased
-----------
+1.0.0 (2026-10-17)
+------------------
+
+First release as ``drafthorse-ng``, based on drafthorse 2025.2.0 by pretix.
 
 Backwards incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

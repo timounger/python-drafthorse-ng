@@ -1,16 +1,28 @@
 .. highlight:: python
 
-drafthorse -- Basic ZUGFeRD implementation in Python
-====================================================
+drafthorse-ng -- Basic ZUGFeRD implementation in Python
+=======================================================
 
-.. image:: https://github.com/pretix/python-drafthorse/actions/workflows/tests.yml/badge.svg
-   :target: https://github.com/pretix/python-drafthorse/actions/workflows/tests.yml
+.. image:: https://github.com/timounger/python-drafthorse-ng/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/timounger/python-drafthorse-ng/actions/workflows/tests.yml
 
-.. image:: https://codecov.io/gh/pretix/python-drafthorse/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/pretix/drafthorse
+This is an unofficial, further developed fork of `drafthorse <https://github.com/pretix/python-drafthorse>`_
+by pretix with support for ZUGFeRD 2.5.2. It is not affiliated with or endorsed by pretix. The changes
+compared to drafthorse 2025.2.0 are listed in the ``CHANGELOG.rst``, some of them are backwards incompatible.
 
-.. image:: http://img.shields.io/pypi/v/drafthorse.svg
-   :target: https://pypi.python.org/pypi/drafthorse
+The import name is still ``drafthorse``, so existing code keeps working apart from the changes listed in the
+changelog. Do not install ``drafthorse`` and ``drafthorse-ng`` at the same time, they overwrite each other.
+
+Installation
+------------
+
+The package is not published on PyPI. Install it directly from GitHub, pinned to a release tag:
+
+.. code-block:: bash
+
+    pip install "drafthorse-ng @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.0"
+
+The same line can be used in a ``requirements.txt``.
 
 This is a low-level python implementation of the ZUGFeRD XML format. ZUGFeRD is a German
 format for sending digital invoices. ZUGFeRD XML files are to be attached to a PDF
@@ -26,16 +38,6 @@ All output is validated against the official XSDs. Validation against the offici
 (business rules of the profile levels) is available optionally, see below.
 
 The profile level is detected automatically based on the XML data and added to the PDF metadata.
-
-Maintenance note
-----------------
-
-With the possibly upcoming legal obligation to use digital formats for all B2B invoices in
-Germany, interest in this library is increasing. We built this library to ble able to use it
-in the `pretix-zugferd <https://github.com/pretix/pretix-zugferd>`_ module and we are planning
-to keep maintaining the library. However, it is not our core business and turnaround time on
-issus or PR reviews might be longer than usual due to other priorities. We do not offer paid
-consulting services around this library.
 
 Usage
 -----
@@ -164,7 +166,7 @@ official Factur-X schematron, install the optional dependency and pass ``schemat
 
 .. code-block:: bash
 
-    pip install drafthorse[schematron]
+    pip install "drafthorse-ng[schematron] @ git+https://github.com/timounger/python-drafthorse-ng.git@v1.0.0"
 
 .. code-block:: python
 
@@ -212,12 +214,16 @@ To validate files using mustang:
 Security
 --------
 
-If you discover a security issue, please contact us at security@pretix.eu and see our `Responsible Disclosure Policy <https://docs.pretix.eu/trust/security/disclosure/>`_ further information.
+If you discover a security issue, please report it privately via
+`GitHub <https://github.com/timounger/python-drafthorse-ng/security/advisories/new>`_ instead of opening a public issue.
 
 Credits and License
 -------------------
 
-Maintainer: Raphael Michel <michel@rami.io>
+Maintainer of drafthorse-ng: Timo Unger
+
+drafthorse was originally developed by Raphael Michel <michel@rami.io> and pretix. The copyright of the original
+code remains with its authors.
 
 License of the Python code: Apache License 2.0
 
