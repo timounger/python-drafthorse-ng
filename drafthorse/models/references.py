@@ -37,7 +37,28 @@ class BuyerOrderReferencedDocument(ReferencedDocument):
         tag = "BuyerOrderReferencedDocument"
 
 
+class QuotationReferencedDocument(ReferencedDocument):
+    class Meta:
+        namespace = NS_RAM
+        tag = "QuotationReferencedDocument"
+
+
 class ContractReferencedDocument(ReferencedDocument):
+    reference_type_code = StringField(
+        NS_RAM,
+        "ReferenceTypeCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Art des Vertrags (Code)",
+    )
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
+
     class Meta:
         namespace = NS_RAM
         tag = "ContractReferencedDocument"
@@ -49,6 +70,13 @@ class AdditionalReferencedDocument(ReferencedDocument):
     name = StringField(NS_RAM, "Name", profile=COMFORT, required=False)
     attached_object = BinaryObjectField(
         NS_RAM, "AttachmentBinaryObject", required=False, profile=COMFORT
+    )
+    reference_type_code = StringField(
+        NS_RAM,
+        "ReferenceTypeCode",
+        required=False,
+        profile=COMFORT,
+        _d="Kennung des Schemas der referenzierten Objektkennung",
     )
     issue_date_time = DateTimeField(
         NS_RAM,
@@ -118,6 +146,21 @@ class LineUltimateCustomerOrderReferencedDocument(ReferencedDocument):
     class Meta:
         namespace = NS_RAM
         tag = "UltimateCustomerOrderReferencedDocument"
+
+
+class LineSellerOrderReferencedDocument(ReferencedDocument):
+    line_id = StringField(NS_RAM, "LineID", required=False, profile=EXTENDED)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "SellerOrderReferencedDocument"
 
 
 class LineBuyerOrderReferencedDocument(ReferencedDocument):

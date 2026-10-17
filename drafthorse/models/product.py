@@ -68,12 +68,16 @@ class OriginCountry(Element):
 
 
 class ReferencedProduct(Element):
+    id = IDField(NS_RAM, "ID", required=False, profile=EXTENDED)
     global_id = IDField(NS_RAM, "GlobalID", required=False, profile=EXTENDED)
     seller_assigned_id = StringField(
         NS_RAM, "SellerAssignedID", required=True, profile=EXTENDED
     )
     buyer_assigned_id = StringField(
         NS_RAM, "BuyerAssignedID", required=True, profile=EXTENDED
+    )
+    industry_assigned_id = IDField(
+        NS_RAM, "IndustryAssignedID", required=False, profile=EXTENDED
     )
     name = StringField(NS_RAM, "Name", required=False, profile=EXTENDED)
     description = StringField(NS_RAM, "Description", required=False, profile=EXTENDED)

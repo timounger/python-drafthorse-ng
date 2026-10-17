@@ -83,6 +83,13 @@ class TradeContact(Element):
     department_name = StringField(
         NS_RAM, "DepartmentName", required=False, profile=EXTENDED
     )
+    type_code = StringField(
+        NS_RAM,
+        "TypeCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Art des Kontakts (Code)",
+    )
     telephone: PhoneNumber = Field(PhoneNumber, required=False, profile=EXTENDED)
     fax: FaxNumber = Field(FaxNumber, required=False, profile=EXTENDED)
     email: EmailURI = Field(EmailURI, required=False, profile=EXTENDED)
@@ -136,6 +143,24 @@ class TradeParty(Element):
     tax_registrations: Container = MultiField(
         TaxRegistration, required=False, profile=BASIC
     )
+
+
+class SalesAgentTradeParty(TradeParty):
+    class Meta:
+        namespace = NS_RAM
+        tag = "SalesAgentTradeParty"
+
+
+class BuyerTaxRepresentativeTradeParty(TradeParty):
+    class Meta:
+        namespace = NS_RAM
+        tag = "BuyerTaxRepresentativeTradeParty"
+
+
+class BuyerAgentTradeParty(TradeParty):
+    class Meta:
+        namespace = NS_RAM
+        tag = "BuyerAgentTradeParty"
 
 
 class SellerTaxRepresentativeTradeParty(TradeParty):

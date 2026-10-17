@@ -265,3 +265,40 @@ class TradeAllowanceCharge(Element):
     class Meta:
         namespace = NS_RAM
         tag = "SpecifiedTradeAllowanceCharge"
+
+
+class IncludedTradeTax(Element):
+    calculated_amount = DecimalField(
+        NS_RAM, "CalculatedAmount", required=True, profile=BASIC, _d="Steuerbetrag"
+    )
+    type_code = StringField(
+        NS_RAM, "TypeCode", required=True, profile=BASIC, _d="Steuerart (Code)"
+    )
+    exemption_reason = StringField(
+        NS_RAM,
+        "ExemptionReason",
+        required=False,
+        profile=COMFORT,
+        _d="Grund der Steuerbefreiung (Freitext)",
+    )
+    category_code = StringField(
+        NS_RAM,
+        "CategoryCode",
+        required=False,
+        profile=COMFORT,
+        _d="Steuerkategorie (Wert)",
+    )
+    exemption_reason_code = StringField(
+        NS_RAM,
+        "ExemptionReasonCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Grund der Steuerbefreiung (Code)",
+    )
+    rate_applicable_percent = DecimalField(
+        NS_RAM, "RateApplicablePercent", required=True, profile=BASIC
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "IncludedTradeTax"

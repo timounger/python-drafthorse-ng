@@ -13,8 +13,9 @@ from drafthorse.models.accounting import (
 from drafthorse.models.document import Document
 from drafthorse.models.party import TaxRegistration
 from drafthorse.models.payment import PaymentMeans
-from drafthorse.models.product import ProductClassification
+from drafthorse.models.product import ProductClassification, ReferencedProduct
 from drafthorse.models.references import (
+    AdditionalReferencedDocument,
     LineAdditionalReferencedDocument,
     LineInvoiceReferencedDocument,
 )
@@ -390,3 +391,66 @@ def test_sub_invoice_line_without_agreement_and_delivery():
     assert "SpecifiedLineTradeDelivery" not in xml
     parsed = LineItem().from_etree(ET.fromstring(xml))
     assert parsed.document.parent_line_id._text == "1"
+
+
+@pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
+def test_extended_parties_and_references(invoice_document):
+    doc = copy.deepcopy(invoice_document)
+    agreement = doc.trade.agreement
+    agreement.seller.contact.person_name = "Max Mustermann"
+    agreement.seller.contact.type_code = "SR"
+    for party in (
+        agreement.sales_agent,
+        agreement.buyer_tax_representative_party,
+        agreement.buyer_agent,
+    ):
+        party.name = "Partei GmbH"
+        party.address.country_id = "DE"
+    agreement.buyer_tax_representative_party.tax_registrations.add(
+        TaxRegistration(id=("VA", "DE123456789"))
+    )
+    agreement.quotation.issuer_assigned_id = "AN1000"
+    agreement.quotation.issue_date_time = date(2024, 1, 1)
+    agreement.contract.issuer_assigned_id = "V1000"
+    agreement.contract.reference_type_code = "CT"
+    ref = AdditionalReferencedDocument()
+    ref.issuer_assigned_id = "OBJ1000"
+    ref.type_code = "130"
+    ref.reference_type_code = "AAA"
+    agreement.additional_references.add(ref)
+
+    terms = list(doc.trade.settlement.terms.children)[0]
+    terms.payee.name = "Zahlungsempfänger GmbH"
+
+    li = list(doc.trade.items.children)[0]
+    li.agreement.seller_order.issuer_assigned_id = "AU1000"
+    li.agreement.seller_order.line_id = "1"
+    li.agreement.net.included_trade_tax.calculated_amount = Decimal("1.90")
+    li.agreement.net.included_trade_tax.type_code = "VAT"
+    li.agreement.net.included_trade_tax.category_code = "S"
+    li.agreement.net.included_trade_tax.rate_applicable_percent = Decimal("19")
+    included = ReferencedProduct()
+    included.id = "TEIL-1"
+    included.industry_assigned_id = "IND-1"
+    included.name = "Teil"
+    li.product.included_products.add(included)
+
+    xml = doc.serialize(schema="FACTUR-X_EXTENDED")
+
+    parsed = Document.parse(xml)
+    agreement = parsed.trade.agreement
+    assert agreement.seller.contact.type_code._text == "SR"
+    assert agreement.sales_agent.name._text == "Partei GmbH"
+    assert agreement.buyer_tax_representative_party.name._text == "Partei GmbH"
+    assert agreement.buyer_agent.name._text == "Partei GmbH"
+    assert agreement.quotation.issuer_assigned_id._text == "AN1000"
+    assert agreement.contract.reference_type_code._text == "CT"
+    ref = list(agreement.additional_references.children)[-1]
+    assert ref.reference_type_code._text == "AAA"
+    terms = list(parsed.trade.settlement.terms.children)[0]
+    assert terms.payee.name._text == "Zahlungsempfänger GmbH"
+    li = list(parsed.trade.items.children)[0]
+    assert li.agreement.seller_order.line_id._text == "1"
+    assert li.agreement.net.included_trade_tax.rate_applicable_percent._value == 19
+    included = list(li.product.included_products.children)[0]
+    assert included.industry_assigned_id._text == "IND-1"

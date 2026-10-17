@@ -2,6 +2,7 @@ from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .accounting import (
     ApplicableTradeTax,
     BillingSpecifiedPeriod,
+    IncludedTradeTax,
     ReceivableAccountingAccount,
     TradeAllowanceCharge,
 )
@@ -28,6 +29,7 @@ from .references import (
     LineInvoiceReferencedDocument,
     LineQuotationReferencedDocument,
     LineReceivingAdviceReferencedDocument,
+    LineSellerOrderReferencedDocument,
     LineUltimateCustomerOrderReferencedDocument,
 )
 
@@ -57,7 +59,12 @@ class NetPrice(Element):
     basis_quantity = QuantityField(
         NS_RAM, "BasisQuantity", required=False, profile=COMFORT, _d="Preisbasismenge"
     )
-    # TODO: IncludedTradeTax missing
+    included_trade_tax: IncludedTradeTax = Field(
+        IncludedTradeTax,
+        required=False,
+        profile=EXTENDED,
+        _d="Im Preis enthaltene Steuer (B2C)",
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -88,6 +95,12 @@ class LineAgreement(Element):
         required=False,
         profile=EXTENDED,
         _d="Lieferbedingungen der Position",
+    )
+    seller_order: LineSellerOrderReferencedDocument = Field(
+        LineSellerOrderReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Detailinformationen zum zugehörigen Auftrag",
     )
     buyer_order: LineBuyerOrderReferencedDocument = Field(
         LineBuyerOrderReferencedDocument, required=False, profile=EXTENDED

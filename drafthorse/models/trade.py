@@ -3,6 +3,7 @@ from .accounting import (
     ApplicableTradeTax,
     AppliedTradeTax,
     BillingSpecifiedPeriod,
+    IncludedTradeTax,
     MonetarySummation,
     ReceivableAccountingAccount,
     TradeAllowanceCharge,
@@ -12,12 +13,15 @@ from .container import Container
 from .elements import Element
 from .fields import DateTimeField, DecimalField, Field, MultiField, StringField
 from .party import (
+    BuyerAgentTradeParty,
+    BuyerTaxRepresentativeTradeParty,
     BuyerTradeParty,
     EndUserTradeParty,
     InvoiceeTradeParty,
     InvoicerTradeParty,
     PayeeTradeParty,
     PayerTradeParty,
+    SalesAgentTradeParty,
     SellerTaxRepresentativeTradeParty,
     SellerTradeParty,
 )
@@ -34,6 +38,7 @@ from .references import (
     InvoiceReferencedDocument,
     InvoiceSpecifiedReferencedDocument,
     ProcuringProjectType,
+    QuotationReferencedDocument,
     UltimateCustomerOrderReferencedDocument,
 )
 from .tradelines import LineItem
@@ -51,6 +56,18 @@ class TradeAgreement(Element):
         SellerTradeParty, required=True, _d="Detailinformationen zum Verkäufer"
     )
     buyer: BuyerTradeParty = Field(BuyerTradeParty, required=True)
+    sales_agent: SalesAgentTradeParty = Field(
+        SalesAgentTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Handelsvertreter",
+    )
+    buyer_tax_representative_party: BuyerTaxRepresentativeTradeParty = Field(
+        BuyerTaxRepresentativeTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Steuervertreter des Käufers",
+    )
     seller_tax_representative_party: SellerTaxRepresentativeTradeParty = Field(
         SellerTaxRepresentativeTradeParty, required=False
     )
@@ -66,11 +83,23 @@ class TradeAgreement(Element):
     buyer_order: BuyerOrderReferencedDocument = Field(
         BuyerOrderReferencedDocument, required=False
     )
+    quotation: QuotationReferencedDocument = Field(
+        QuotationReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Detailinformationen zum zugehörigen Angebot",
+    )
     contract: ContractReferencedDocument = Field(
         ContractReferencedDocument, required=False, profile=COMFORT
     )
     additional_references: Container = MultiField(
         AdditionalReferencedDocument, required=False, profile=COMFORT
+    )
+    buyer_agent: BuyerAgentTradeParty = Field(
+        BuyerAgentTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Einkaufsagent",
     )
     description = StringField(NS_RAM, "Description", required=False, profile=COMFORT)
     procuring_project_type: ProcuringProjectType = Field(
@@ -105,43 +134,6 @@ class LogisticsServiceCharge(Element):
     class Meta:
         namespace = NS_RAM
         tag = "SpecifiedLogisticsServiceCharge"
-
-
-class IncludedTradeTax(Element):
-    calculated_amount = DecimalField(
-        NS_RAM, "CalculatedAmount", required=True, profile=BASIC, _d="Steuerbetrag"
-    )
-    type_code = StringField(
-        NS_RAM, "TypeCode", required=True, profile=BASIC, _d="Steuerart (Code)"
-    )
-    exemption_reason = StringField(
-        NS_RAM,
-        "ExemptionReason",
-        required=False,
-        profile=COMFORT,
-        _d="Grund der Steuerbefreiung (Freitext)",
-    )
-    category_code = StringField(
-        NS_RAM,
-        "CategoryCode",
-        required=False,
-        profile=COMFORT,
-        _d="Steuerkategorie (Wert)",
-    )
-    exemption_reason_code = StringField(
-        NS_RAM,
-        "ExemptionReasonCode",
-        required=False,
-        profile=EXTENDED,
-        _d="Grund der Steuerbefreiung (Code)",
-    )
-    rate_applicable_percent = DecimalField(
-        NS_RAM, "RateApplicablePercent", required=True, profile=BASIC
-    )
-
-    class Meta:
-        namespace = NS_RAM
-        tag = "IncludedTradeTax"
 
 
 class FinancialAdjustment(Element):

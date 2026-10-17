@@ -1,5 +1,6 @@
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
+from .party import PayeeTradeParty
 from .container import StringContainer, CurrencyContainer
 from .fields import (
     DateTimeField,
@@ -225,6 +226,12 @@ class PaymentTerms(Element):
         required=False,
         profile=EXTENDED,
         _d="Detailinformationen zu Zahlungsabschlägen",
+    )
+    payee: PayeeTradeParty = Field(
+        PayeeTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Abweichender Zahlungsempfänger für diese Zahlungsbedingung",
     )
 
     class Meta:
