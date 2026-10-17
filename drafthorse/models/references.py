@@ -1,4 +1,4 @@
-from . import BASIC, COMFORT, NS_RAM, NS_QDT
+from . import BASIC, COMFORT, EXTENDED, NS_RAM, NS_QDT
 from .elements import Element
 from .fields import BinaryObjectField, DateTimeField, StringField, IDField
 
@@ -169,6 +169,22 @@ class ReceivingAdviceReferencedDocument(ReferencedDocument):
     class Meta:
         namespace = NS_RAM
         tag = "ReceivingAdviceReferencedDocument"
+
+
+class LineInvoiceReferencedDocument(ReferencedDocument):
+    line_id = StringField(NS_RAM, "LineID", required=False, profile=EXTENDED)
+    type_code = StringField(NS_RAM, "TypeCode", required=False, profile=EXTENDED)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "InvoiceReferencedDocument"
 
 
 class LineReceivingAdviceReferencedDocument(ReferencedDocument):

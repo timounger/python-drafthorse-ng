@@ -19,12 +19,12 @@ from .note import IncludedNote
 from .party import ShipToTradeParty, UltimateShipToTradeParty
 from .product import TradeProduct
 from .references import (
-    InvoiceReferencedDocument,
     LineAdditionalReferencedDocument,
     LineBuyerOrderReferencedDocument,
     LineContractReferencedDocument,
     LineDeliveryNoteReferencedDocument,
     LineDespatchAdviceReferencedDocument,
+    LineInvoiceReferencedDocument,
     LineReceivingAdviceReferencedDocument,
     LineUltimateCustomerOrderReferencedDocument,
 )
@@ -200,7 +200,7 @@ class LineSettlement(Element):
         LineSummation, required=False, profile=BASIC
     )
     invoice_referenced_document: Container = MultiField(
-        InvoiceReferencedDocument,
+        LineInvoiceReferencedDocument,
         required=False,
         profile=EXTENDED,
         _d="Referenz auf die vorausgegangene Rechnung",

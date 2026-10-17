@@ -5,6 +5,7 @@ from datetime import date
 
 from drafthorse.models.document import Document
 from drafthorse.models.product import ProductClassification
+from drafthorse.models.references import LineInvoiceReferencedDocument
 from drafthorse.models.tradelines import LineItem
 from drafthorse.pdf import attach_xml
 
@@ -178,3 +179,27 @@ def test_referenced_documents_follow_xsd_sequence(invoice_document):
     assert (
         list(parsed.trade.items.children)[0].agreement.buyer_order.line_id._text == "1"
     )
+
+
+@pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
+def test_line_invoice_referenced_document_line_id(invoice_document):
+    doc = copy.deepcopy(invoice_document)
+    invoice_ref = LineInvoiceReferencedDocument()
+    invoice_ref.issuer_assigned_id = "RE1000"
+    invoice_ref.line_id = "3"
+    invoice_ref.type_code = "380"
+    invoice_ref.issue_date_time = date(2024, 1, 1)
+    li = list(doc.trade.items.children)[0]
+    li.settlement.invoice_referenced_document.add(invoice_ref)
+
+    xml = doc.serialize(schema="FACTUR-X_EXTENDED")
+
+    parsed = Document.parse(xml)
+    li = list(parsed.trade.items.children)[0]
+    parsed_ref = list(li.settlement.invoice_referenced_document.children)[0]
+    assert parsed_ref.line_id._text == "3"
+    assert parsed_ref.type_code._text == "380"
+
+    # LineID is marked as not used on header level
+    with pytest.raises(AttributeError):
+        doc.trade.settlement.invoice_referenced_document.line_id = "3"
