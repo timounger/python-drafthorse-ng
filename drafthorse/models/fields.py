@@ -131,6 +131,35 @@ class IDField(Field):
             instance._data[self.name]._text = value
 
 
+class CodeField(Field):
+    def __init__(
+        self, namespace, tag, default=False, required=False, profile=BASIC, _d=None
+    ):
+        from .elements import CodeElement
+
+        super().__init__(CodeElement, default, required, profile, _d)
+        self.namespace = namespace
+        self.tag = tag
+
+    def initialize(self):
+        return self.cls(self.namespace, self.tag)
+
+    def __set__(self, instance, value):
+        if instance._data.get(self.name, None) is None:
+            instance._data[self.name] = self.initialize()
+
+        if isinstance(value, (tuple, list)):
+            if len(value) == 2:
+                instance._data[self.name]._text = value[1]
+                instance._data[self.name]._list_id = value[0]
+            else:
+                raise TypeError(
+                    "Please pass a 2-tuple of including list ID and code, or just a code."
+                )
+        else:
+            instance._data[self.name]._text = value
+
+
 class CurrencyField(Field):
     def __init__(
         self, namespace, tag, default=False, required=False, profile=BASIC, _d=None

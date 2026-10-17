@@ -5,13 +5,20 @@ import xml.etree.ElementTree as ET
 from datetime import date
 from decimal import Decimal
 
+from drafthorse.models.accounting import (
+    AppliedTradeTax,
+    CategoryTradeTax,
+    TradeAllowanceCharge,
+)
 from drafthorse.models.document import Document
 from drafthorse.models.party import TaxRegistration
+from drafthorse.models.payment import PaymentMeans
 from drafthorse.models.product import ProductClassification
 from drafthorse.models.references import (
     LineAdditionalReferencedDocument,
     LineInvoiceReferencedDocument,
 )
+from drafthorse.models.trade import FinancialAdjustment, LogisticsServiceCharge
 from drafthorse.models.tradelines import LineItem
 from drafthorse.pdf import attach_xml
 
@@ -267,3 +274,119 @@ def test_elements_follow_xsd_sequence(invoice_document):
     assert li.agreement.customer_order.issuer_assigned_id._text == "EK1000"
     ref = list(li.agreement.additional_references.children)[0]
     assert ref.reference_type_code._text == "AAA"
+
+
+@pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
+def test_factur_x_1_09_extended_terms(invoice_document):
+    doc = copy.deepcopy(invoice_document)
+    settlement = doc.trade.settlement
+    settlement.tax_currency_code = "USD"
+
+    # BG-X-22 with BT-X-563 / BT-X-564
+    doc.trade.agreement.delivery_terms.type_code = "FCA"
+    doc.trade.agreement.delivery_terms.location.country_id = "DE"
+    doc.trade.agreement.delivery_terms.location.name = "Hamburg"
+
+    # BT-215 / BT-216
+    payment = PaymentMeans(type_code="59")
+    payment.payer_account.iban = "DE02120300000000202051"
+    payment.payer_account.account_name = "Kunde GmbH"
+    payment.payer_institution.bic = "BYLADEM1001"
+    settlement.payment_means.add(payment)
+
+    # BT-177 / BT-177-1, BT-173 / BT-174
+    charge = TradeAllowanceCharge()
+    charge.indicator = True
+    charge.actual_amount = Decimal("1.00")
+    charge.reason_code = ("5153", "AAA")
+    charge.reason = "Abgabe"
+    tax = CategoryTradeTax()
+    tax.type_code = "VAT"
+    tax.exemption_reason = "Steuerbefreit"
+    tax.category_code = "E"
+    tax.exemption_reason_code = "VATEX-EU-132"
+    tax.rate_applicable_percent = Decimal("0")
+    charge.trade_tax.add(tax)
+    settlement.allowance_charge.add(charge)
+
+    # BT-X-591 / BT-X-592
+    service = LogisticsServiceCharge()
+    service.description = "Versand"
+    service.applied_amount = Decimal("1.00")
+    tax = AppliedTradeTax()
+    tax.type_code = "VAT"
+    tax.exemption_reason = "Steuerbefreit"
+    tax.category_code = "E"
+    tax.exemption_reason_code = "VATEX-EU-132"
+    tax.rate_applicable_percent = Decimal("0")
+    service.trade_tax.add(tax)
+    settlement.service_charge.add(service)
+
+    # BG-34 with BT-179 / BT-180
+    adjustment = FinancialAdjustment()
+    adjustment.reason = "Porto"
+    adjustment.actual_amount = Decimal("2.50")
+    settlement.financial_adjustment.add(adjustment)
+
+    li = list(doc.trade.items.children)[0]
+    # BT-X-565
+    li.agreement.delivery_terms.type_code = "FCA"
+    li.agreement.delivery_terms.location.country_id = "DE"
+    # BG-X-90
+    li.agreement.item_seller.name = "Anderer Verkäufer GmbH"
+    li.agreement.item_seller.address.country_id = "DE"
+    # BT-X-561
+    li.delivery.package_quantity = (Decimal("2"), "XPK")
+    li.delivery.per_package_unit_quantity = (Decimal("6"), "H87")
+    # BG-X-93
+    li.product.manufacturer.name = "Hersteller GmbH"
+    li.product.manufacturer.address.country_id = "DE"
+    # BT-X-590
+    li.settlement.monetary_summation.tax_total = (Decimal("1.90"), "EUR")
+    li.settlement.monetary_summation.tax_total_other_currency = (
+        Decimal("2.10"),
+        "USD",
+    )
+
+    xml = doc.serialize(schema="FACTUR-X_EXTENDED")
+
+    parsed = Document.parse(xml)
+    agreement = parsed.trade.agreement
+    assert agreement.delivery_terms.location.name._text == "Hamburg"
+    settlement = parsed.trade.settlement
+    payment = list(settlement.payment_means.children)[-1]
+    assert payment.payer_account.account_name._text == "Kunde GmbH"
+    assert payment.payer_institution.bic._text == "BYLADEM1001"
+    charge = list(settlement.allowance_charge.children)[-1]
+    assert charge.reason_code._list_id == "5153"
+    assert charge.reason_code._text == "AAA"
+    tax = list(charge.trade_tax.children)[0]
+    assert tax.exemption_reason_code._text == "VATEX-EU-132"
+    service = list(settlement.service_charge.children)[0]
+    assert list(service.trade_tax.children)[0].exemption_reason._text == "Steuerbefreit"
+    adjustment = list(settlement.financial_adjustment.children)[0]
+    assert adjustment.actual_amount._value == Decimal("2.50")
+    li = list(parsed.trade.items.children)[0]
+    assert li.agreement.delivery_terms.location.country_id._text == "DE"
+    assert li.agreement.item_seller.name._text == "Anderer Verkäufer GmbH"
+    assert li.delivery.per_package_unit_quantity._amount == Decimal("6")
+    assert li.product.manufacturer.name._text == "Hersteller GmbH"
+    summation = li.settlement.monetary_summation
+    assert summation.tax_total._amount == Decimal("1.90")
+    assert summation.tax_total._currency == "EUR"
+    assert summation.tax_total_other_currency._amount == Decimal("2.10")
+    assert summation.tax_total_other_currency._currency == "USD"
+
+
+def test_sub_invoice_line_without_agreement_and_delivery():
+    li = LineItem()
+    li.document.line_id = "1.1"
+    li.document.parent_line_id = "1"
+    li.document.line_status_reason_code = "INFORMATION"
+    li.product.name = "Teil eines Sets"
+    xml = ET.tostring(li.to_etree()).decode()
+
+    assert "SpecifiedLineTradeAgreement" not in xml
+    assert "SpecifiedLineTradeDelivery" not in xml
+    parsed = LineItem().from_etree(ET.fromstring(xml))
+    assert parsed.document.parent_line_id._text == "1"

@@ -202,3 +202,15 @@ class UltimateShipToTradeParty(TradeParty):
     class Meta:
         namespace = NS_RAM
         tag = "UltimateShipToTradeParty"
+
+
+class ItemSellerTradeParty(TradeParty):
+    class Meta:
+        namespace = NS_RAM
+        tag = "ItemSellerTradeParty"
+
+
+class ManufacturerTradeParty(TradeParty):
+    class Meta:
+        namespace = NS_RAM
+        tag = "ManufacturerTradeParty"

@@ -23,6 +23,13 @@ class FinancialCard(Element):
 
 class PayerFinancialAccount(Element):
     iban = StringField(NS_RAM, "IBANID")
+    account_name = StringField(
+        NS_RAM,
+        "AccountName",
+        required=False,
+        profile=EXTENDED,
+        _d="Name des belasteten Kontos",
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -37,6 +44,20 @@ class PayeeFinancialAccount(Element):
     class Meta:
         namespace = NS_RAM
         tag = "PayeePartyCreditorFinancialAccount"
+
+
+class PayerFinancialInstitution(Element):
+    bic = StringField(
+        NS_RAM,
+        "BICID",
+        required=False,
+        profile=EXTENDED,
+        _d="Kennung des Zahlungsdienstleisters des belasteten Kontos",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "PayerSpecifiedDebtorFinancialInstitution"
 
 
 class PayeeFinancialInstitution(Element):
@@ -55,6 +76,9 @@ class PaymentMeans(Element):
     financial_card: FinancialCard = Field(FinancialCard)
     payer_account: PayerFinancialAccount = Field(PayerFinancialAccount)
     payee_account: PayeeFinancialAccount = Field(PayeeFinancialAccount)
+    payer_institution: PayerFinancialInstitution = Field(
+        PayerFinancialInstitution, required=False, profile=EXTENDED
+    )
     payee_institution: PayeeFinancialInstitution = Field(PayeeFinancialInstitution)
 
     class Meta:

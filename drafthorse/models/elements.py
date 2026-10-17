@@ -337,6 +337,29 @@ class IDElement(StringElement):
         return "{} ({})".format(self._text, self._scheme_id)
 
 
+class CodeElement(StringElement):
+    def __init__(self, namespace, tag, text="", list_id=""):
+        super().__init__(namespace, tag)
+        self._text = text
+        self._list_id = list_id
+
+    def to_etree(self):
+        node = self._etree_node()
+        node.text = self._text
+        if self._list_id != "":
+            node.attrib["listID"] = self._list_id
+        return node
+
+    def from_etree(self, root, strict=True):
+        self._text = root.text
+        self._list_id = root.attrib.get("listID", "")
+        self._set_on_input = True
+        return self
+
+    def __str__(self):
+        return "{} ({})".format(self._text, self._list_id)
+
+
 class DateTimeElement(StringElement):
     _string_tag = "DateTimeString"
 

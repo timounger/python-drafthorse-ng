@@ -2,6 +2,7 @@ from .container import CurrencyContainer, Container
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
 from .fields import (
+    CodeField,
     CurrencyField,
     DateField,
     DateTimeField,
@@ -178,7 +179,21 @@ class MonetarySummation(Element):
 
 class AppliedTradeTax(Element):
     type_code = StringField(NS_RAM, "TypeCode", required=True, profile=COMFORT)
+    exemption_reason = StringField(
+        NS_RAM,
+        "ExemptionReason",
+        required=False,
+        profile=EXTENDED,
+        _d="Grund der Steuerbefreiung (Freitext)",
+    )
     category_code = StringField(NS_RAM, "CategoryCode", required=True, profile=COMFORT)
+    exemption_reason_code = StringField(
+        NS_RAM,
+        "ExemptionReasonCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Grund der Steuerbefreiung (Code)",
+    )
     rate_applicable_percent = DecimalField(
         NS_RAM, "RateApplicablePercent", required=True, profile=COMFORT
     )
@@ -237,7 +252,13 @@ class TradeAllowanceCharge(Element):
         profile=COMFORT,
         _d="Betrag des Zu-/Abschlags",
     )
-    reason_code = StringField(NS_RAM, "ReasonCode", required=False, profile=COMFORT)
+    reason_code = CodeField(
+        NS_RAM,
+        "ReasonCode",
+        required=False,
+        profile=COMFORT,
+        _d="Grund des Zu-/Abschlags (Code), optional mit Code-Liste",
+    )
     reason = StringField(NS_RAM, "Reason", required=False, profile=COMFORT)
     trade_tax: Container = MultiField(CategoryTradeTax, required=False, profile=COMFORT)
 

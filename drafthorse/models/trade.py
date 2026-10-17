@@ -7,7 +7,7 @@ from .accounting import (
     ReceivableAccountingAccount,
     TradeAllowanceCharge,
 )
-from .delivery import TradeDelivery
+from .delivery import DeliveryTerms, TradeDelivery
 from .container import Container
 from .elements import Element
 from .fields import DateTimeField, DecimalField, Field, MultiField, StringField
@@ -37,20 +37,6 @@ from .references import (
     UltimateCustomerOrderReferencedDocument,
 )
 from .tradelines import LineItem
-
-
-class DeliveryTerms(Element):
-    type_code = StringField(
-        NS_RAM,
-        "DeliveryTypeCode",
-        required=False,
-        profile=EXTENDED,
-        _d="Lieferbedingung (Code)",
-    )
-
-    class Meta:
-        namespace = NS_RAM
-        tag = "ApplicableTradeDeliveryTerms"
 
 
 class TradeAgreement(Element):
@@ -158,6 +144,27 @@ class IncludedTradeTax(Element):
         tag = "IncludedTradeTax"
 
 
+class FinancialAdjustment(Element):
+    reason = StringField(
+        NS_RAM,
+        "Reason",
+        required=True,
+        profile=EXTENDED,
+        _d="Beschreibung der Zahlung im Namen Dritter",
+    )
+    actual_amount = DecimalField(
+        NS_RAM,
+        "ActualAmount",
+        required=True,
+        profile=EXTENDED,
+        _d="Betrag der Zahlung im Namen Dritter",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "SpecifiedFinancialAdjustment"
+
+
 class AdvancePayment(Element):
     paid_amount = DecimalField(NS_RAM, "PaidAmount")
     received_date = DateTimeField(
@@ -218,6 +225,12 @@ class TradeSettlement(Element):
         required=True,
         profile=BASIC,
         _d="Detailinformation zu Belegsummen",
+    )
+    financial_adjustment: Container = MultiField(
+        FinancialAdjustment,
+        required=False,
+        profile=EXTENDED,
+        _d="Zahlungen im Namen Dritter",
     )
     invoice_referenced_document: InvoiceReferencedDocument = Field(
         InvoiceReferencedDocument, required=False, profile=BASIC

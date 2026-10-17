@@ -6,9 +6,10 @@ from .accounting import (
     TradeAllowanceCharge,
 )
 from .container import Container
-from .delivery import SupplyChainEvent
+from .delivery import DeliveryTerms, SupplyChainEvent
 from .elements import Element
 from .fields import (
+    CurrencyField,
     DecimalField,
     Field,
     MultiField,
@@ -16,7 +17,7 @@ from .fields import (
     StringField,
 )
 from .note import IncludedNote
-from .party import ShipToTradeParty, UltimateShipToTradeParty
+from .party import ItemSellerTradeParty, ShipToTradeParty, UltimateShipToTradeParty
 from .product import TradeProduct
 from .references import (
     LineAdditionalReferencedDocument,
@@ -82,6 +83,12 @@ class LineDocument(Element):
 
 
 class LineAgreement(Element):
+    delivery_terms: DeliveryTerms = Field(
+        DeliveryTerms,
+        required=False,
+        profile=EXTENDED,
+        _d="Lieferbedingungen der Position",
+    )
     buyer_order: LineBuyerOrderReferencedDocument = Field(
         LineBuyerOrderReferencedDocument, required=False, profile=EXTENDED
     )
@@ -99,6 +106,12 @@ class LineAgreement(Element):
     )
     gross: GrossPrice = Field(GrossPrice, required=False, profile=COMFORT)
     net: NetPrice = Field(NetPrice)
+    item_seller: ItemSellerTradeParty = Field(
+        ItemSellerTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Abweichender Verkäufer der Position",
+    )
     customer_order: LineUltimateCustomerOrderReferencedDocument = Field(
         LineUltimateCustomerOrderReferencedDocument, required=False, profile=EXTENDED
     )
@@ -110,7 +123,7 @@ class LineAgreement(Element):
 
 class LineDelivery(Element):
     billed_quantity = QuantityField(
-        NS_RAM, "BilledQuantity", required=True, profile=BASIC, _d="Menge, berechnet"
+        NS_RAM, "BilledQuantity", required=False, profile=BASIC, _d="Menge, berechnet"
     )
     charge_free_quantity = QuantityField(
         NS_RAM,
@@ -125,6 +138,13 @@ class LineDelivery(Element):
         required=False,
         profile=EXTENDED,
         _d="Anzahl Packstücke",
+    )
+    per_package_unit_quantity = QuantityField(
+        NS_RAM,
+        "PerPackageUnitQuantity",
+        required=False,
+        profile=EXTENDED,
+        _d="Menge pro Packstück",
     )
     ship_to: ShipToTradeParty = Field(
         ShipToTradeParty, required=False, profile=EXTENDED
@@ -157,7 +177,7 @@ class LineSummation(Element):
     total_amount = DecimalField(
         NS_RAM,
         "LineTotalAmount",
-        required=True,
+        required=False,
         profile=COMFORT,
         _d="Nettobetrag der Rechnungsposition",
     )
@@ -175,12 +195,19 @@ class LineSummation(Element):
         profile=EXTENDED,
         _d="Gesamtbetrag der Positionsabschläge",
     )
-    tax_total = DecimalField(
+    tax_total = CurrencyField(
         NS_RAM,
         "TaxTotalAmount",
         required=False,
         profile=EXTENDED,
         _d="Gesamtbetrag der Positionssteuern",
+    )
+    tax_total_other_currency = CurrencyField(
+        NS_RAM,
+        "TaxTotalAmount",
+        required=False,
+        profile=EXTENDED,
+        _d="Gesamtbetrag der Positionssteuern in Buchungswährung",
     )
     grand_total = DecimalField(
         NS_RAM,

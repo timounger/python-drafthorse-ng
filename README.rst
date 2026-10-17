@@ -18,8 +18,8 @@ file. This library can be used to generate or parse the contents of this XML fil
 attach it to a PDF. We do not support parsing PDF files (for now).
 
 By low-level, we mean that this library tries to model the ZUGFeRD data model 1:1 without any
-further abstractions or simplifications. You can set and parse all parameters defined in ZUGFeRD
-2.3. To see which parameters are defined, please refer to the official ZUGFeRD specification,
+further abstractions or simplifications. You can set and parse most parameters defined in ZUGFeRD
+2.5.2 (Factur-X 1.09.2). To see which parameters are defined, please refer to the official ZUGFeRD specification,
 there is no documentation for this library that reiterates it.
 
 All output is validated against the official XSDs, but no validation of profile levels

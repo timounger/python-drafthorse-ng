@@ -13,6 +13,47 @@ from .references import (
 )
 
 
+class TradeLocation(Element):
+    country_id = StringField(
+        NS_RAM,
+        "CountryID",
+        required=False,
+        profile=EXTENDED,
+        _d="Ländercode des Orts der Lieferbedingung",
+    )
+    name = StringField(
+        NS_RAM,
+        "Name",
+        required=False,
+        profile=EXTENDED,
+        _d="Name des Orts der Lieferbedingung",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "RelevantTradeLocation"
+
+
+class DeliveryTerms(Element):
+    type_code = StringField(
+        NS_RAM,
+        "DeliveryTypeCode",
+        required=False,
+        profile=EXTENDED,
+        _d="Lieferbedingung (Code)",
+    )
+    location: TradeLocation = Field(
+        TradeLocation,
+        required=False,
+        profile=EXTENDED,
+        _d="Ort der Lieferbedingung",
+    )
+
+    class Meta:
+        namespace = NS_RAM
+        tag = "ApplicableTradeDeliveryTerms"
+
+
 class SupplyChainEvent(Element):
     occurrence = DateTimeField(
         NS_RAM,

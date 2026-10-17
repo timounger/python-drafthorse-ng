@@ -1,6 +1,7 @@
 from . import COMFORT, EXTENDED, NS_RAM
 from .container import Container
 from .elements import Element
+from .party import ManufacturerTradeParty
 from .fields import (
     ClassificationField,
     Field,
@@ -19,7 +20,7 @@ class ProductCharacteristic(Element):
         profile=EXTENDED,
         _d="Art der Produkteigenschaft",
     )
-    description = StringField(NS_RAM, "Description", required=True, profile=COMFORT)
+    description = StringField(NS_RAM, "Description", required=False, profile=COMFORT)
     value_measure = QuantityField(
         NS_RAM,
         "ValueMeasure",
@@ -111,6 +112,12 @@ class TradeProduct(Element):
     )
     instance: Container = MultiField(ProductInstance, required=False, profile=EXTENDED)
     origin: OriginCountry = Field(OriginCountry, required=False, profile=COMFORT)
+    manufacturer: ManufacturerTradeParty = Field(
+        ManufacturerTradeParty,
+        required=False,
+        profile=EXTENDED,
+        _d="Hersteller des Produkts",
+    )
     included_products: Container = MultiField(
         ReferencedProduct, required=False, profile=EXTENDED
     )
