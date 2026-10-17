@@ -110,7 +110,8 @@ class Element(metaclass=BaseElementMeta):
             field_index.setdefault(element.get_tag(), []).append(field.name)
         filled = set()
         for child in root:
-            if child.tag == ET.Comment:
+            # Skip comments and processing instructions of both ElementTree and lxml
+            if not isinstance(child.tag, str):
                 continue
             if child.tag in field_index:
                 candidates = field_index[child.tag]

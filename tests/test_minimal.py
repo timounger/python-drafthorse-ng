@@ -508,3 +508,15 @@ def test_repeatable_elements(invoice_document):
 def test_header_agreement_has_no_description():
     with pytest.raises(AttributeError):
         TradeAgreement().description = "Not part of any schema"
+
+
+def test_parse_xml_with_comments():
+    samples = os.path.join(os.path.dirname(__file__), "samples")
+    # The official sample contains a comment within a line item
+    with open(
+        os.path.join(samples, "zugferd_2p5_EN16931_E14_01_Kraftfahrversicherung.xml"),
+        "rb",
+    ) as f:
+        doc = Document.parse(f.read())
+
+    assert doc.header.id._text
