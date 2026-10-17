@@ -1,6 +1,7 @@
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
-from .fields import DateTimeField, Field, StringField
+from .container import Container
+from .fields import DateTimeField, Field, MultiField, StringField
 from .party import (
     ShipFromTradeParty,
     ShipToTradeParty,
@@ -79,6 +80,12 @@ class LogisticsTransportMovement(Element):
 class SupplyChainConsignment(Element):  # TODO: Deprecated?
     movement: LogisticsTransportMovement = Field(
         LogisticsTransportMovement, required=False, profile=EXTENDED
+    )
+    further_movements: Container = MultiField(
+        LogisticsTransportMovement,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Transportmittel",
     )
 
     class Meta:

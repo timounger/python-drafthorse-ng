@@ -1,5 +1,5 @@
 from . import COMFORT, EXTENDED, NS_RAM
-from .container import Container
+from .container import Container, IDContainer, StringContainer
 from .elements import Element
 from .party import ManufacturerTradeParty
 from .fields import (
@@ -7,6 +7,8 @@ from .fields import (
     Field,
     IDField,
     MultiField,
+    MultiIDField,
+    MultiStringField,
     QuantityField,
     StringField,
 )
@@ -70,6 +72,13 @@ class OriginCountry(Element):
 class ReferencedProduct(Element):
     id = IDField(NS_RAM, "ID", required=False, profile=EXTENDED)
     global_id = IDField(NS_RAM, "GlobalID", required=False, profile=EXTENDED)
+    further_global_ids: IDContainer = MultiIDField(
+        NS_RAM,
+        "GlobalID",
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere globale Kennungen",
+    )
     seller_assigned_id = StringField(
         NS_RAM, "SellerAssignedID", required=True, profile=EXTENDED
     )
@@ -106,6 +115,13 @@ class TradeProduct(Element):
     name = StringField(NS_RAM, "Name", required=False)
     description = StringField(NS_RAM, "Description", required=False, profile=COMFORT)
     batch_id = IDField(NS_RAM, "BatchID", required=False, profile=EXTENDED)
+    further_batch_ids: StringContainer = MultiStringField(
+        NS_RAM,
+        "BatchID",
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Chargennummern",
+    )
     brand_name = StringField(NS_RAM, "BrandName", required=False, profile=EXTENDED)
     model_name = StringField(NS_RAM, "ModelName", required=False, profile=EXTENDED)
     characteristics: Container = MultiField(

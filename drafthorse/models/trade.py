@@ -101,12 +101,17 @@ class TradeAgreement(Element):
         profile=EXTENDED,
         _d="Einkaufsagent",
     )
-    description = StringField(NS_RAM, "Description", required=False, profile=COMFORT)
     procuring_project_type: ProcuringProjectType = Field(
         ProcuringProjectType, required=False
     )
     customer_order: UltimateCustomerOrderReferencedDocument = Field(
         UltimateCustomerOrderReferencedDocument, required=False, profile=COMFORT
+    )
+    further_customer_orders: Container = MultiField(
+        UltimateCustomerOrderReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Aufträge des Endkunden",
     )
 
     class Meta:
@@ -227,11 +232,23 @@ class TradeSettlement(Element):
     invoice_referenced_document: InvoiceReferencedDocument = Field(
         InvoiceReferencedDocument, required=False, profile=BASIC
     )
+    further_invoice_referenced_documents: Container = MultiField(
+        InvoiceReferencedDocument,
+        required=False,
+        profile=BASIC,
+        _d="Weitere vorausgegangene Rechnungen",
+    )
     accounting_account: ReceivableAccountingAccount = Field(
         ReceivableAccountingAccount,
         required=False,
         profile=BASIC,
         _d="Detailinformationen zur Buchungsreferenz",
+    )
+    further_accounting_accounts: Container = MultiField(
+        ReceivableAccountingAccount,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Buchungsreferenzen",
     )
     advance_payment: Container = MultiField(
         AdvancePayment, required=False, profile=EXTENDED

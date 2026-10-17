@@ -11,15 +11,20 @@ from drafthorse.models.accounting import (
     TradeAllowanceCharge,
 )
 from drafthorse.models.document import Document
-from drafthorse.models.party import TaxRegistration
+from drafthorse.models.party import TaxRegistration, TradeContact
 from drafthorse.models.payment import PaymentMeans
 from drafthorse.models.product import ProductClassification, ReferencedProduct
 from drafthorse.models.references import (
     AdditionalReferencedDocument,
+    InvoiceReferencedDocument,
     LineAdditionalReferencedDocument,
     LineInvoiceReferencedDocument,
 )
-from drafthorse.models.trade import FinancialAdjustment, LogisticsServiceCharge
+from drafthorse.models.trade import (
+    FinancialAdjustment,
+    LogisticsServiceCharge,
+    TradeAgreement,
+)
 from drafthorse.models.tradelines import LineItem
 from drafthorse.pdf import attach_xml
 
@@ -454,3 +459,52 @@ def test_extended_parties_and_references(invoice_document):
     assert li.agreement.net.included_trade_tax.rate_applicable_percent._value == 19
     included = list(li.product.included_products.children)[0]
     assert included.industry_assigned_id._text == "IND-1"
+
+
+@pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
+def test_repeatable_elements(invoice_document):
+    doc = copy.deepcopy(invoice_document)
+    seller = doc.trade.agreement.seller
+    seller.id = "LIEF-1"
+    seller.further_ids.add("LIEF-2")
+    seller.contact.person_name = "Erster Kontakt"
+    contact = TradeContact()
+    contact.person_name = "Zweiter Kontakt"
+    seller.further_contacts.add(contact)
+
+    settlement = doc.trade.settlement
+    settlement.invoice_referenced_document.issuer_assigned_id = "RE1000"
+    settlement.invoice_referenced_document.issue_date_time = date(2024, 1, 1)
+    previous = InvoiceReferencedDocument()
+    previous.issuer_assigned_id = "RE1001"
+    previous.issue_date_time = date(2024, 1, 2)
+    settlement.further_invoice_referenced_documents.add(previous)
+
+    li = list(doc.trade.items.children)[0]
+    li.product.batch_id = "CH-1"
+    li.product.further_batch_ids.add("CH-2")
+
+    xml = doc.serialize(schema="FACTUR-X_EXTENDED")
+
+    parsed = Document.parse(xml)
+    seller = parsed.trade.agreement.seller
+    assert seller.id._text == "LIEF-1"
+    assert seller.further_ids.children == ["LIEF-2"]
+    assert seller.contact.person_name._text == "Erster Kontakt"
+    assert [c.person_name._text for c in seller.further_contacts.children] == [
+        "Zweiter Kontakt"
+    ]
+    settlement = parsed.trade.settlement
+    assert settlement.invoice_referenced_document.issuer_assigned_id._text == "RE1000"
+    assert [
+        r.issuer_assigned_id._text
+        for r in settlement.further_invoice_referenced_documents.children
+    ] == ["RE1001"]
+    li = list(parsed.trade.items.children)[0]
+    assert li.product.batch_id._text == "CH-1"
+    assert li.product.further_batch_ids.children == ["CH-2"]
+
+
+def test_header_agreement_has_no_description():
+    with pytest.raises(AttributeError):
+        TradeAgreement().description = "Not part of any schema"

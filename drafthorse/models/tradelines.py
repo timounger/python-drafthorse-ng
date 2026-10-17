@@ -128,6 +128,12 @@ class LineAgreement(Element):
     customer_order: LineUltimateCustomerOrderReferencedDocument = Field(
         LineUltimateCustomerOrderReferencedDocument, required=False, profile=EXTENDED
     )
+    further_customer_orders: Container = MultiField(
+        LineUltimateCustomerOrderReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Aufträge des Endkunden",
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -244,6 +250,12 @@ class LineSummation(Element):
 
 class LineSettlement(Element):
     trade_tax: ApplicableTradeTax = Field(ApplicableTradeTax, required=False)
+    further_trade_taxes: Container = MultiField(
+        ApplicableTradeTax,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Steuerangaben der Position",
+    )
     period: BillingSpecifiedPeriod = Field(BillingSpecifiedPeriod, required=False)
     allowance_charge: Container = MultiField(
         TradeAllowanceCharge,
@@ -262,11 +274,23 @@ class LineSettlement(Element):
     additional_referenced_document: LineAdditionalReferencedDocument = Field(
         LineAdditionalReferencedDocument, required=False, profile=COMFORT
     )
+    further_additional_referenced_documents: Container = MultiField(
+        LineAdditionalReferencedDocument,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Referenzdokumente der Position",
+    )
     accounting_account: ReceivableAccountingAccount = Field(
         ReceivableAccountingAccount,
         required=False,
         profile=COMFORT,
         _d="Detailinformationen zur Buchungsreferenz",
+    )
+    further_accounting_accounts: Container = MultiField(
+        ReceivableAccountingAccount,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Buchungsreferenzen",
     )
 
     class Meta:

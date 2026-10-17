@@ -1,7 +1,15 @@
 from . import BASIC, COMFORT, EXTENDED, NS_RAM
 from .elements import Element
 from .container import Container, IDContainer
-from .fields import Field, IDField, MultiField, MultiIDField, StringField
+from .container import StringContainer
+from .fields import (
+    Field,
+    IDField,
+    MultiField,
+    MultiIDField,
+    MultiStringField,
+    StringField,
+)
 
 
 class PostalTradeAddress(Element):
@@ -103,6 +111,13 @@ class TradeParty(Element):
     id = StringField(
         NS_RAM, "ID", required=False, profile=COMFORT, _d="Kennung des Handelspartners"
     )
+    further_ids: StringContainer = MultiStringField(
+        NS_RAM,
+        "ID",
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Kennungen des Handelspartners",
+    )
     global_id: IDContainer = MultiIDField(
         NS_RAM,
         "GlobalID",
@@ -130,6 +145,12 @@ class TradeParty(Element):
         required=False,
         profile=EXTENDED,
         _d="Ansprechpartner des Handelspartners",
+    )
+    further_contacts: Container = MultiField(
+        TradeContact,
+        required=False,
+        profile=EXTENDED,
+        _d="Weitere Ansprechpartner des Handelspartners",
     )
     address: PostalTradeAddress = Field(
         PostalTradeAddress,
