@@ -50,6 +50,13 @@ class AdditionalReferencedDocument(ReferencedDocument):
     attached_object = BinaryObjectField(
         NS_RAM, "AttachmentBinaryObject", required=False, profile=COMFORT
     )
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -58,6 +65,13 @@ class AdditionalReferencedDocument(ReferencedDocument):
 
 class InvoiceReferencedDocument(ReferencedDocument):
     type_code = StringField(NS_RAM, "TypeCode", profile=COMFORT, required=False)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -66,6 +80,13 @@ class InvoiceReferencedDocument(ReferencedDocument):
 
 class InvoiceSpecifiedReferencedDocument(ReferencedDocument):
     type_code = StringField(NS_RAM, "TypeCode", profile=COMFORT, required=False)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -86,6 +107,13 @@ class DespatchAdviceReferencedDocument(ReferencedDocument):
 
 class LineUltimateCustomerOrderReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -94,6 +122,13 @@ class LineUltimateCustomerOrderReferencedDocument(ReferencedDocument):
 
 class LineBuyerOrderReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -102,6 +137,13 @@ class LineBuyerOrderReferencedDocument(ReferencedDocument):
 
 class LineContractReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -110,6 +152,13 @@ class LineContractReferencedDocument(ReferencedDocument):
 
 class LineDespatchAdviceReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -124,6 +173,13 @@ class ReceivingAdviceReferencedDocument(ReferencedDocument):
 
 class LineReceivingAdviceReferencedDocument(ReferencedDocument):
     line_id = StringField(NS_RAM, "LineID", required=False, profile=COMFORT)
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
+    )
 
     class Meta:
         namespace = NS_RAM
@@ -140,6 +196,13 @@ class LineAdditionalReferencedDocument(ReferencedDocument):
     )
     attached_object = BinaryObjectField(
         NS_RAM, "AttachmentBinaryObject", required=False, profile=COMFORT
+    )
+    issue_date_time = DateTimeField(
+        NS_RAM,
+        "FormattedIssueDateTime",
+        required=True,
+        profile=BASIC,
+        date_time_namespace=NS_QDT,
     )
 
     class Meta:

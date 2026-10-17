@@ -1,6 +1,9 @@
+import copy
 import pytest
 import xml.etree.ElementTree as ET
+from datetime import date
 
+from drafthorse.models.document import Document
 from drafthorse.models.product import ProductClassification
 from drafthorse.models.tradelines import LineItem
 from drafthorse.pdf import attach_xml
@@ -154,3 +157,24 @@ def test_product_classification_roundtrip(class_code):
     assert parsed_code._list_version_id == class_code[1]
     assert parsed_code._text == class_code[2]
     assert ET.tostring(parsed.to_etree()) == xml
+
+
+@pytest.mark.parametrize("invoice_document", ["380"], indirect=True)
+def test_referenced_documents_follow_xsd_sequence(invoice_document):
+    doc = copy.deepcopy(invoice_document)
+    invoice_ref = doc.trade.settlement.invoice_referenced_document
+    invoice_ref.issuer_assigned_id = "RE1000"
+    invoice_ref.type_code = "380"
+    invoice_ref.issue_date_time = date(2024, 1, 1)
+    li = list(doc.trade.items.children)[0]
+    li.agreement.buyer_order.issuer_assigned_id = "B1000"
+    li.agreement.buyer_order.line_id = "1"
+    li.agreement.buyer_order.issue_date_time = date(2024, 1, 1)
+
+    xml = doc.serialize(schema="FACTUR-X_EXTENDED")
+
+    parsed = Document.parse(xml)
+    assert parsed.trade.settlement.invoice_referenced_document.type_code._text == "380"
+    assert (
+        list(parsed.trade.items.children)[0].agreement.buyer_order.line_id._text == "1"
+    )

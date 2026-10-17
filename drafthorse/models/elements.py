@@ -25,6 +25,9 @@ class BaseElementMeta(type):
             if isinstance(obj, Field):
                 if sys.version_info < (3, 6):
                     obj.__set_name__(cls, attr)
+                # A redeclared field replaces the inherited one and moves to
+                # its new position, so subclasses can follow the XSD sequence
+                fields = [f for f in fields if f.name != attr]
                 fields.append(obj)
         cls._fields = fields
         return cls
