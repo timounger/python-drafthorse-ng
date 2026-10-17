@@ -15,6 +15,9 @@ Backwards incompatible changes
   raises a ``TypeError``.
 * ``TradeAgreement.description`` was removed. ``ram:Description`` does not exist in
   ``ApplicableHeaderTradeAgreement`` in any schema, so setting it always produced invalid XML.
+* ``attach_xml`` embeds the XML of the profile XRECHNUNG as ``xrechnung.xml`` with the XRechnung
+  version in ``fx:Version``, as required by the specification. Invalid guideline IDs or levels raise
+  ``ValueError``.
 * When parsing, ``monetary_summation.tax_total`` now holds the first ``TaxTotalAmount`` and
   ``tax_total_other_currency`` only further ones. Previously all of them ended up in
   ``tax_total_other_currency`` and ``tax_total`` was always empty.
@@ -64,3 +67,7 @@ Bug fixes
   the ultimate customer order and the attachment of additional references on line level.
 * ``TaxPointDate`` (BT-7) was written as ``udt:DateTimeString`` instead of ``udt:DateString``.
 * Parsing failed with ``Unknown element`` for XML containing comments within elements.
+* ``attach_xml`` wrote ``BASICWL`` instead of ``BASIC WL`` as conformance level and used the
+  relationship ``Alternative`` instead of ``Data`` for BASIC WL.
+* ``IDElement`` added an empty ``schemeID`` attribute to the parsed input.
+* ``DirectDateTimeElement`` dropped the time when parsing and silently ignored invalid values.
