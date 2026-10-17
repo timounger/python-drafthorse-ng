@@ -176,9 +176,11 @@ official Factur-X schematron, install the optional dependency and pass ``schemat
         for rule_id, location, message in e.errors:
             print(rule_id, location, message)
 
-Schematron rules are available for the profiles ``MINIMUM``, ``BASIC-WL``, ``BASIC``, ``EN16931``
-and ``EXTENDED``. ``drafthorse.utils.validate_schematron(xml, schema)`` can also be used on existing
-XML and returns the list of warnings.
+Schematron rules are available for the profiles ``MINIMUM``, ``BASIC-WL``, ``BASIC``, ``EN16931``,
+``EXTENDED`` and ``XRECHNUNG``. For ``XRECHNUNG``, the rules of EN 16931 and of the CIUS XRechnung
+are applied in the combination of the official KoSIT validator configuration.
+``drafthorse.utils.validate_schematron(xml, schema)`` can also be used on existing XML and returns
+the list of warnings.
 
 Development
 -----------
@@ -223,3 +225,7 @@ The PDF handling (drafthorse/pdf.py) was originally based on the code of factur-
 released under a BSD license.
 
 The packages includes schemas and samples of the ZUGFeRD specification (.xsd and .xml files) which are owned by the *Forum für elektronische Rechnungen bei der AWV e.V („FeRD“)* and are released under a proprietary license that allows bundling them together with other software for free.
+
+The schematron rules for the profile XRECHNUNG (``drafthorse/schema/schematron/xrechnung``) are included unmodified:
+the rules of EN 16931 are licensed under the European Union Public Licence (EUPL) 1.2, the rules of the CIUS XRechnung
+by the KoSIT under the Apache License 2.0. See the ``README.txt`` in that directory for sources and versions.
