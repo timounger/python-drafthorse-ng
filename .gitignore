@@ -7,4 +7,5 @@ env
 *.pyc
 *~
 .cache/
-
+CLAUDE.md
+.coverage
