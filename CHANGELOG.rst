@@ -21,6 +21,33 @@ Backwards incompatible changes
 * When parsing, ``monetary_summation.tax_total`` now holds the first ``TaxTotalAmount`` and
   ``tax_total_other_currency`` only further ones. Previously all of them ended up in
   ``tax_total_other_currency`` and ``tax_total`` was always empty.
+* The model only contains the elements of the Factur-X 1.09.2 EXTENDED profile in their context.
+  Elements that passed the XSD but are "not used" according to the schematron were removed: setting
+  them raises ``AttributeError``, strict parsing raises ``TypeError`` (use ``strict=False`` to skip
+  them). Affected are:
+
+  * ``description`` of all parties except seller, buyer, item seller and manufacturer
+  * the address of the legal organization of line level parties and the manufacturer
+  * ``basis_amount``, ``line_total_basis_amount``, ``allowance_charge_basis_amount`` and
+    ``tax_point_date`` of the line level tax
+  * ``description`` of the line level billing period
+  * ``sequence_numeric``, ``basis_quantity`` and ``trade_tax`` of line level allowances and charges
+  * all elements except ``issuer_assigned_id``, ``type_code`` and ``reference_type_code`` of the
+    additional referenced document of the line settlement
+
+* New classes for the line level, containers on line level only accept these:
+  ``LineTradeAllowanceCharge`` (``LineSettlement.allowance_charge``), ``LineApplicableTradeTax``,
+  ``LineBillingSpecifiedPeriod``, ``LineShipToTradeParty``, ``LineUltimateShipToTradeParty``,
+  ``LineLegalOrganization`` and ``LineSettlementAdditionalReferencedDocument``.
+* Elements the XSD allows only once are single fields instead of containers:
+  ``TradeAllowanceCharge.trade_tax``, ``LineSettlement.invoice_referenced_document``,
+  ``PaymentMeans.information``, ``PaymentTerms.partial_amount`` and
+  ``MonetarySummation.tax_total_other_currency``. Set their values directly instead of using
+  ``.add()``.
+* A field redeclared in a subclass now replaces the inherited field in place instead of moving to
+  the end. ``ReferencedDocument`` contains all elements in XSD order; subclasses remove the ones
+  they do not use.
+* ``serialize(schema="FACTUR-X_XRECHNUNG")`` validates against the XRechnung XSD (CII D16B).
 
 Features
 ^^^^^^^^
@@ -30,6 +57,9 @@ Features
 * Optional validation against the official Factur-X schematron (business rules and code lists) for
   MINIMUM, BASIC WL, BASIC, EN16931 and EXTENDED: ``doc.serialize(schema=..., schematron=True)`` or
   ``drafthorse.utils.validate_schematron(xml, schema)``. Requires ``pip install drafthorse[schematron]``.
+* Schematron validation for XRECHNUNG with the rules of EN 16931 (CEN 1.3.16, EUPL 1.2) and of the
+  CIUS XRechnung 3.0.2 (KoSIT 2.6.0) like the KoSIT validator configuration 2026-08-31.
+* ``attach_xml`` adds an sRGB output intent if the input PDF has none, as required for PDF/A.
 * Business terms introduced in Factur-X 1.08 and 1.09 (EXTENDED):
 
   * BT-X-561 number of units per package (``LineDelivery.per_package_unit_quantity``)
